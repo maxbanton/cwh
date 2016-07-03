@@ -7,3 +7,57 @@ Uses [AWS CloudWatch](https://aws.amazon.com/en/cloudwatch/) Log services
 
 Before using this library, it's recommended to get acquainted with the [pricing](https://aws.amazon.com/en/cloudwatch/pricing/) for AWS CloudWatch services
 
+## Installation
+
+Install the latest version with
+
+```bash
+$ composer require maxbanton/cwh
+```
+## Basic Usage
+
+```php
+<?php
+
+use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Maxbanton\Cwh\Handler\CloudWatch;
+use Monolog\Logger;
+
+
+$awsSdkParams = [
+    'region' => 'eu-west-1',
+    'version' => 'latest',
+    'credentials' => [
+        'key' => 'fill in your AWS key',
+        'secret' => 'fill in your AWS secret',
+        'token' => 'fill in your AWS session token', //optional
+    ]
+];
+
+// Instantiate AWS SDK CloudWatch Logs Client
+$client = new CloudWatchLogsClient($awsSdkParams);
+
+// Log group name, will be created if none
+$logGroupName = 'php-logtest';
+
+// Log stream name, will be created if none
+$logStreamName = 'ec2-instance-1';
+
+// Days to keep logs, 7 by default
+$daysToRetention = 14;
+
+// Instantiate handler
+$handler = new CloudWatch($client, $logGroupName, $logStreamName);
+
+// Create a log channel
+$log = new Logger('name');
+
+// Set handler
+$log->pushHandler($handler);
+
+// Add records to the log
+$log->warning('Foo');
+$log->error('Bar');
+```
+
+
