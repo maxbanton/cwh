@@ -47,7 +47,7 @@ $logStreamName = 'ec2-instance-1';
 $daysToRetention = 14;
 
 // Instantiate handler
-$handler = new CloudWatch($client, $logGroupName, $logStreamName);
+$handler = new CloudWatch($client, $logGroupName, $logStreamName, $daysToRetention);
 
 // Create a log channel
 $log = new Logger('name');
