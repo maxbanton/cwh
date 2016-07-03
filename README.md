@@ -1,5 +1,5 @@
 #AWS CloudWatch Handler for Monolog library
-[![Build Status](https://travis-ci.org/maxbanton/cwh.svg?branch=master)](https://travis-ci.org/maxbanton/cwh)
+[![Build Status](https://travis-ci.org/maxbanton/cwh.svg?branch=master)](https://travis-ci.org/maxbanton/cwh) [![Coverage Status](https://coveralls.io/repos/github/maxbanton/cwh/badge.svg?branch=master)](https://coveralls.io/github/maxbanton/cwh?branch=master)
 
 Custom handler for PHP logging library [Monolog](https://github.com/Seldaek/monolog)
 
