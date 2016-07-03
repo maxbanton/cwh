@@ -11,5 +11,5 @@ before_script:
   - composer install --no-interaction --dev -o
 
 script:
-  - vendor/bin/phpunit --coverage-textphpunit
+  - vendor/bin/phpunit
   - vendor/bin/phpcs --standard=PSR2 src/
