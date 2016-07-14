@@ -60,4 +60,8 @@ $log->warning('Foo');
 $log->error('Bar');
 ```
 
+## Frameworks integration
+
+ - [Silex integration](http://silex.sensiolabs.org/doc/providers/monolog.html#customization)
+
 
