@@ -6,6 +6,10 @@ php:
   - hhvm
   - nightly
 
+cache:
+  directories:
+  - "$HOME/.composer"
+
 before_script:
   - composer self-update
   - composer install --no-interaction --dev -o
