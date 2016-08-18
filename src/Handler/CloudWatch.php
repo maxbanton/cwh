@@ -72,7 +72,7 @@ class CloudWatch extends AbstractProcessingHandler
         // update sequence token
         $this->uploadSequenceToken = $response->get('nextSequenceToken');
     }
-    
+
     private function initialize()
     {
         // fetch existing groups
@@ -120,7 +120,7 @@ class CloudWatch extends AbstractProcessingHandler
         $existingStreamsNames = array_map(function ($stream) {
 
             // set sequence token
-            if ($stream['logStreamName'] === $this->logStreamName) {
+            if ($stream['logStreamName'] === $this->logStreamName && isset($stream['uploadSequenceToken'])) {
                 $this->uploadSequenceToken = $stream['uploadSequenceToken'];
             }
 
