@@ -4,6 +4,7 @@ namespace Maxbanton\Cwh\Test;
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Maxbanton\Cwh\Handler\CloudWatch;
+use Aws\Result;
 
 class CloudWatchTest extends \PHPUnit_Framework_TestCase
 {
@@ -23,13 +24,22 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
         $this->clientMock =
             $this
                 ->getMockBuilder(CloudWatchLogsClient::class)
-                ->setMethods(['describeLogGroups', 'CreateLogGroup', 'PutRetentionPolicy', 'DescribeLogStreams', 'CreateLogStream', 'PutLogEvents'])
+                ->setMethods(
+                    [
+                        'describeLogGroups',
+                        'CreateLogGroup',
+                        'PutRetentionPolicy',
+                        'DescribeLogStreams',
+                        'CreateLogStream',
+                        'PutLogEvents'
+                    ]
+                )
                 ->disableOriginalConstructor()
                 ->getMock();
 
         $this->awsResultMock =
             $this
-            ->getMockBuilder(\Aws\Result::class)
+            ->getMockBuilder(Result::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();

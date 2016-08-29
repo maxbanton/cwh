@@ -15,9 +15,10 @@ before_script:
   - composer install --no-interaction --dev -o
 
 script:
+  - php -l src/
+  - vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
   - mkdir -p build/logs
   - vendor/bin/phpunit --coverage-clover build/logs/clover.xml
-  - vendor/bin/phpcs --standard=PSR2 src/
 
 after_script:
    - php vendor/bin/coveralls -v
