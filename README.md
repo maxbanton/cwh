@@ -64,4 +64,8 @@ $log->error('Bar');
 
  - [Silex integration](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
 
+## Issues
+
+Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
+
 
