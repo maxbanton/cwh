@@ -4,3 +4,5 @@
 /nbproject/
 /puphpet/
 /Vagrantfile
+/.vagrant/
+/html/*
