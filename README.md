@@ -63,6 +63,38 @@ $log->error('Bar');
 ## Frameworks integration
 
  - [Silex integration](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
+ - Symfony Integration :
+
+Add to /app/services.yml:
+
+```
+parameters:
+    awsCredentialsClass:              Aws\Credentials\Credentials
+    cloudWatchLogsClientClass:        Aws\CloudWatchLogs\CloudWatchLogsClient
+    cloudWatchMonologHandlerClass:    Maxbanton\Cwh\Handler\CloudWatch
+
+services:
+  awsCredentials:
+    class:      %awsCredentialsClass%
+    arguments: [%aws_sdk_credentials_key%, %aws_sdk_credentials_secret%,  %aws_sdk_credentials_token%, %aws_sdk_credentials_expires%]
+
+  cloudWatchLogsClient:
+    class:      %cloudWatchLogsClientClass%
+    arguments: [{version: %aws_sdk_version%, region: %aws_sdk_region%, credentials: "@awsCredentials"}]
+
+  monolog.handler.cloudwatchmonologhandler:
+      class:      %cloudWatchMonologHandlerClass%
+      arguments : ["@cloudWatchLogsClient", %aws_cloud_watch_group%, %aws_cloud_watch_stream%, %aws_cloud_watch_retention%]
+```
+
+Add to /app/config.yml:
+```
+        cloudwatch:
+            type:         buffer
+            handler:      cloudWatchMonologHandler
+            channels:     [!event]
+            level:        warning
+```
 
 ## Issues
 
