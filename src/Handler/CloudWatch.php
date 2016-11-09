@@ -88,6 +88,8 @@ class CloudWatch extends AbstractProcessingHandler
             $this->initialize();
         }
 
+        $events = [];
+
         foreach ($messages as $message) {
             $events[] = [
                 'message' => $message['formatted'],

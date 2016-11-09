@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b42bfcd8b98f42e82181d1cb8750ebfb",
-    "content-hash": "3014e24e0cbcb18890f93a528ce166a9",
+    "hash": "7f94ee1c22217369849c62234d8f82f3",
+    "content-hash": "1dbb3bdc340eaa4a4c40a6aa25e1b9e2",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -639,6 +639,39 @@
             ],
             "abandoned": "guzzlehttp/guzzle",
             "time": "2015-03-18 18:23:50"
+        },
+        {
+            "name": "maxbanton/dd",
+            "version": "0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/maxbanton/dd.git",
+                "reference": "def0148736e70db7dcdde653e35cbd0cd9285995"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/maxbanton/dd/zipball/def0148736e70db7dcdde653e35cbd0cd9285995",
+                "reference": "def0148736e70db7dcdde653e35cbd0cd9285995",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Max Leonov",
+                    "email": "hi@maxleonov.pw"
+                }
+            ],
+            "description": "Laravel's old school style dump library",
+            "time": "2016-06-21 11:33:22"
         },
         {
             "name": "myclabs/deep-copy",
