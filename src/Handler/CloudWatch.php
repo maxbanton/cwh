@@ -21,11 +21,11 @@ class CloudWatch extends AbstractProcessingHandler
      * CloudWatchHandler constructor.
      *
      * @param CloudWatchLogsClient $client
-     * @param string               $logGroupName
-     * @param string               $logStreamName
-     * @param int                  $retentionDays
-     * @param int                  $level
-     * @param bool                 $bubble
+     * @param string $logGroupName
+     * @param string $logStreamName
+     * @param int $retentionDays
+     * @param int $level
+     * @param bool $bubble
      */
     public function __construct(
         CloudWatchLogsClient $client,
@@ -35,7 +35,7 @@ class CloudWatch extends AbstractProcessingHandler
         $level = Logger::DEBUG,
         $bubble = true
     ) {
-    
+
         $this->client = $client;
         $this->logGroupName = $logGroupName;
         $this->logStreamName = $logStreamName;
@@ -88,6 +88,8 @@ class CloudWatch extends AbstractProcessingHandler
             $this->initialize();
         }
 
+        $events = [];
+
         foreach ($messages as $message) {
             $events[] = [
                 'message' => $message['formatted'],
@@ -119,8 +121,7 @@ class CloudWatch extends AbstractProcessingHandler
             ->client
             ->describeLogGroups(
                 [
-                'logGroupNamePrefix' => $this->logGroupName,
-                'limit' => self::BATCH_SIZE,
+                    'logGroupNamePrefix' => $this->logGroupName
                 ]
             )
             ->get('logGroups');
@@ -139,15 +140,15 @@ class CloudWatch extends AbstractProcessingHandler
                 ->client
                 ->createLogGroup(
                     [
-                    'logGroupName' => $this->logGroupName,
+                        'logGroupName' => $this->logGroupName,
                     ]
                 );
             $this
                 ->client
                 ->putRetentionPolicy(
                     [
-                    'logGroupName' => $this->logGroupName,
-                    'retentionInDays' => $this->retentionDays,
+                        'logGroupName' => $this->logGroupName,
+                        'retentionInDays' => $this->retentionDays,
                     ]
                 );
         }
@@ -157,9 +158,8 @@ class CloudWatch extends AbstractProcessingHandler
             ->client
             ->describeLogStreams(
                 [
-                'logGroupName' => $this->logGroupName,
-                'logStreamNamePrefix' => $this->logStreamName,
-                'limit' => self::BATCH_SIZE,
+                    'logGroupName' => $this->logGroupName,
+                    'logStreamNamePrefix' => $this->logStreamName,
                 ]
             )
             ->get('logStreams');
@@ -184,8 +184,8 @@ class CloudWatch extends AbstractProcessingHandler
                 ->client
                 ->createLogStream(
                     [
-                    'logGroupName' => $this->logGroupName,
-                    'logStreamName' => $this->logStreamName
+                        'logGroupName' => $this->logGroupName,
+                        'logStreamName' => $this->logStreamName
                     ]
                 );
         }

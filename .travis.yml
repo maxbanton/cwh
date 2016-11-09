@@ -10,7 +10,6 @@ cache:
   - "$HOME/.composer"
 
 before_script:
-  - composer self-update
   - composer install --no-interaction --dev -o
 
 script:
