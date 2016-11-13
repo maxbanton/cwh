@@ -17,4 +17,6 @@ script:
   - vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
   - mkdir -p build/logs
   - vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+
+after_script:
   - vendor/bin/test-reporter
