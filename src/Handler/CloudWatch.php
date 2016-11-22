@@ -10,12 +10,34 @@ class CloudWatch extends AbstractProcessingHandler
 {
     const BATCH_SIZE = 50;
 
+    /**
+     * @var bool
+     */
     private $initialized = false;
+    /**
+     * @var CloudWatchLogsClient
+     */
     private $client;
+    /**
+     * @var string
+     */
     private $logGroupName;
+    /**
+     * @var string
+     */
     private $logStreamName;
+    /**
+     * @var string
+     */
     private $uploadSequenceToken;
+    /**
+     * @var int
+     */
     private $retentionDays;
+    /**
+     * @var array
+     */
+    private $buffer = [];
 
     /**
      * CloudWatchHandler constructor.
@@ -35,7 +57,6 @@ class CloudWatch extends AbstractProcessingHandler
         $level = Logger::DEBUG,
         $bubble = true
     ) {
-
         $this->client = $client;
         $this->logGroupName = $logGroupName;
         $this->logStreamName = $logStreamName;
@@ -49,7 +70,22 @@ class CloudWatch extends AbstractProcessingHandler
      */
     protected function write(array $record)
     {
-        $this->flushMessages([$record]);
+        if (count($this->buffer) >= self::BATCH_SIZE) {
+            $this->flushMessages($this->buffer);
+            $this->buffer = [$record];
+        } else {
+            $this->buffer[] = $record;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function close()
+    {
+        if (!empty($this->buffer)) {
+            $this->flushMessages($this->buffer);
+        }
     }
 
     /**
@@ -117,14 +153,14 @@ class CloudWatch extends AbstractProcessingHandler
     private function initialize()
     {
         // fetch existing groups
-        $existingGroups = $this
-            ->client
-            ->describeLogGroups(
-                [
-                    'logGroupNamePrefix' => $this->logGroupName
-                ]
-            )
-            ->get('logGroups');
+        $existingGroups =
+            $this
+                ->client
+                ->describeLogGroups(
+                    [
+                        'logGroupNamePrefix' => $this->logGroupName
+                    ]
+                )->get('logGroups');
 
         // extract existing groups names
         $existingGroupsNames = array_map(
@@ -154,15 +190,15 @@ class CloudWatch extends AbstractProcessingHandler
         }
 
         // fetch existing streams
-        $existingStreams = $this
-            ->client
-            ->describeLogStreams(
-                [
-                    'logGroupName' => $this->logGroupName,
-                    'logStreamNamePrefix' => $this->logStreamName,
-                ]
-            )
-            ->get('logStreams');
+        $existingStreams =
+            $this
+                ->client
+                ->describeLogStreams(
+                    [
+                        'logGroupName' => $this->logGroupName,
+                        'logStreamNamePrefix' => $this->logStreamName,
+                    ]
+                )->get('logStreams');
 
         // extract existing streams names
         $existingStreamsNames = array_map(
