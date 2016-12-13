@@ -4,7 +4,7 @@
 Custom handler for PHP logging library [Monolog](https://github.com/Seldaek/monolog).
 Allows to send log messages in batches.
 
-Uses [AWS CloudWatch](https://aws.amazon.com/en/cloudwatch/) Log services
+Uses [AWS CloudWatch Logs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html) service
 
 Before using this library, it's recommended to get acquainted with the [pricing](https://aws.amazon.com/en/cloudwatch/pricing/) for AWS CloudWatch services
 
