@@ -8,6 +8,7 @@ Uses [AWS CloudWatch Logs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/lo
 
 Before using this library, it's recommended to get acquainted with the [pricing](https://aws.amazon.com/en/cloudwatch/pricing/) for AWS CloudWatch services
 
+Press star button please if you find this library useful
 
 ## Installation
 
