@@ -1,5 +1,4 @@
 <?php
-declare(strict_types = 1);
 
 namespace Maxbanton\Cwh\Handler;
 
@@ -90,10 +89,10 @@ class CloudWatch extends AbstractProcessingHandler
      */
     public function __construct(
         CloudWatchLogsClient $client,
-        string $group,
-        string $stream,
-        int $retention = 14,
-        int $batchSize = 10000,
+        $group,
+        $stream,
+        $retention = 14,
+        $batchSize = 10000,
         array $tags = [],
         $level = Logger::DEBUG,
         $bubble = true
@@ -158,7 +157,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param $record
      * @return int
      */
-    private function getMessageSize($record): int
+    private function getMessageSize($record)
     {
         return strlen($record['message']) + 26;
     }
@@ -167,7 +166,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param array $entry
      * @return array
      */
-    private function formatRecord(array $entry): array
+    private function formatRecord(array $entry)
     {
         return [
             'message' => $entry['formatted'],
@@ -289,7 +288,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      */
-    protected function getDefaultFormatter(): LineFormatter
+    protected function getDefaultFormatter()
     {
         return new LineFormatter("%level_name%: %message% %context% %extra%\n");
     }
