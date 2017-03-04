@@ -37,7 +37,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * @var string
      */
-    private $sequenceToken = false;
+    private $sequenceToken;
 
     /**
      * @var int
@@ -199,7 +199,7 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
-        if (false !== $this->sequenceToken) {
+        if (!empty($this->sequenceToken)) {
             $data['sequenceToken'] = $this->sequenceToken;
         }
 
