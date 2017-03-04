@@ -1,24 +1,36 @@
 <?php
 
-namespace Maxbanton\Cwh\Test;
+namespace Maxbanton\Cwh\Test\Handler;
+
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
-use Maxbanton\Cwh\Handler\CloudWatch;
 use Aws\Result;
+use Maxbanton\Cwh\Handler\CloudWatch;
+use Monolog\Logger;
+use PHPUnit\Framework\TestCase;
 
-class CloudWatchTest extends \PHPUnit_Framework_TestCase
+class CloudWatchLogsTest extends TestCase
 {
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var \PHPUnit_Framework_MockObject_MockObject | CloudWatchLogsClient
      */
-    protected $clientMock;
+    private $clientMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var \PHPUnit_Framework_MockObject_MockObject | Result
      */
-    protected $awsResultMock;
+    private $awsResultMock;
 
+    /**
+     * @var string
+     */
+    private $groupName = 'group';
+
+    /**
+     * @var string
+     */
+    private $streamName = 'stream';
 
     public function setUp()
     {
@@ -37,34 +49,23 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
                 )
                 ->disableOriginalConstructor()
                 ->getMock();
-
-        $this->awsResultMock =
-            $this
-                ->getMockBuilder(Result::class)
-                ->setMethods(['get'])
-                ->disableOriginalConstructor()
-                ->getMock();
     }
 
-
-    public function testShouldInitializeWithExistingLogGroup()
+    public function testInitializeWithExistingLogGroup()
     {
-        $logGroupName = 'test-log-group-name';
-        $logStreamName = 'test-log-stream-name';
-
-        $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $logGroupName]]]);
+        $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName]]]);
 
         $this
             ->clientMock
             ->expects($this->once())
             ->method('describeLogGroups')
-            ->with(['logGroupNamePrefix' => $logGroupName])
+            ->with(['logGroupNamePrefix' => $this->groupName])
             ->willReturn($logGroupsResult);
 
         $logStreamResult = new Result([
             'logStreams' => [
                 [
-                    'logStreamName' => $logStreamName,
+                    'logStreamName' => $this->streamName,
                     'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
@@ -75,12 +76,12 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
             ->expects($this->once())
             ->method('describeLogStreams')
             ->with([
-                'logGroupName' => $logGroupName,
-                'logStreamNamePrefix' => $logStreamName,
+                'logGroupName' => $this->groupName,
+                'logStreamNamePrefix' => $this->streamName,
             ])
             ->willReturn($logStreamResult);
 
-        $handler = new CloudWatch($this->clientMock, $logGroupName, $logStreamName);
+        $handler = $this->getCUT();
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');
@@ -88,40 +89,36 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
         $reflectionMethod->invoke($handler);
     }
 
-
-    public function testShouldInitializeWithMissingGroupAndStream()
+    public function testInitializeWithMissingGroupAndStream()
     {
-        $logGroupName = 'test-log-group-name';
-        $logStreamName = 'test-log-stream-name';
-
-        $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $logGroupName . 'foo']]]);
+        $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName . 'foo']]]);
 
         $this
             ->clientMock
             ->expects($this->once())
             ->method('describeLogGroups')
-            ->with(['logGroupNamePrefix' => $logGroupName])
+            ->with(['logGroupNamePrefix' => $this->groupName])
             ->willReturn($logGroupsResult);
 
         $this
             ->clientMock
             ->expects($this->once())
             ->method('createLogGroup')
-            ->with(['logGroupName' => $logGroupName]);
+            ->with(['logGroupName' => $this->groupName, 'tags' => []]);
 
         $this
             ->clientMock
             ->expects($this->once())
             ->method('putRetentionPolicy')
             ->with([
-                'logGroupName' => $logGroupName,
-                'retentionInDays' => 365,
+                'logGroupName' => $this->groupName,
+                'retentionInDays' => 14,
             ]);
 
         $logStreamResult = new Result([
             'logStreams' => [
                 [
-                    'logStreamName' => $logStreamName . 'bar',
+                    'logStreamName' => $this->streamName . 'bar',
                     'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198324'
                 ]
             ]
@@ -132,8 +129,8 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
             ->expects($this->once())
             ->method('describeLogStreams')
             ->with([
-                'logGroupName' => $logGroupName,
-                'logStreamNamePrefix' => $logStreamName,
+                'logGroupName' => $this->groupName,
+                'logStreamNamePrefix' => $this->streamName,
             ])
             ->willReturn($logStreamResult);
 
@@ -142,11 +139,11 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
             ->expects($this->once())
             ->method('createLogStream')
             ->with([
-                'logGroupName' => $logGroupName,
-                'logStreamName' => $logStreamName
+                'logGroupName' => $this->groupName,
+                'logStreamName' => $this->streamName
             ]);
 
-        $handler = new CloudWatch($this->clientMock, $logGroupName, $logStreamName, 365);
+        $handler = $this->getCUT();
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');
@@ -154,136 +151,101 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
         $reflectionMethod->invoke($handler);
     }
 
-    public function testShouldWriteOnBatchOverflow()
+    public function testLimitExceeded()
     {
-        $this
-            ->clientMock
-            ->expects($this->exactly(2))
-            ->method('PutLogEvents')
-            ->willReturn($this->awsResultMock);
-
-        $handler = new CloudWatch($this->clientMock, 'test-log-group-name', 'test-log-stream-name');
-
-        $reflection = new \ReflectionClass($handler);
-        $reflectionProperty = $reflection->getProperty('initialized');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($handler, true);
-
-        $reflectionMethod = $reflection->getMethod('write');
-        $reflectionMethod->setAccessible(true);
-
-        for ($i = 0; $i <= 50; $i++) {
-            $reflectionMethod->invoke($handler, ['formatted' => 'Formatted log string' . $i]);
-        }
+        $this->expectException(\InvalidArgumentException::class);
+        (new CloudWatch($this->clientMock, 'a', 'b', 14, 10001));
     }
 
-
-    public function testShouldWrite()
+    public function testHandleBuffers()
     {
-        $logGroupName = 'test-log-group-name';
-        $logStreamName = 'test-log-stream-name';
-        $logString = 'Formatted log string';
-        $token = 'token';
+        $this->prepareMocks();
+        $handler = $this->getCUT();
+
+        $handler->handle($this->getRecord(Logger::DEBUG));
+        $handler->handle($this->getRecord(Logger::INFO));
+
+        $handler->close();
+    }
+
+    private function prepareMocks()
+    {
+        $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName]]]);
 
         $this
             ->clientMock
             ->expects($this->once())
-            ->method('PutLogEvents')
-            ->with(
-                $this->callback(function ($array) use ($logGroupName, $logStreamName, $logString, $token) {
-                    return
-                        array_key_exists('logGroupName', $array) &&
-                        $array['logGroupName'] === $logGroupName &&
-                        array_key_exists('logStreamName', $array) &&
-                        $array['logStreamName'] === $logStreamName &&
-                        is_array($array['logEvents']) &&
-                        array_key_exists('message', $array['logEvents'][0]) &&
-                        $array['logEvents'][0]['message'] === $logString &&
-                        array_key_exists('timestamp', $array['logEvents'][0]) &&
-                        is_double($array['logEvents'][0]['timestamp']) &&
-                        array_key_exists('sequenceToken', $array) &&
-                        $array['sequenceToken'] === $token;
-                }))
-            ->willReturn($this->awsResultMock);
+            ->method('describeLogGroups')
+            ->with(['logGroupNamePrefix' => $this->groupName])
+            ->willReturn($logGroupsResult);
 
-        $handler = new CloudWatch($this->clientMock, $logGroupName, $logStreamName);
-
-        $reflection = new \ReflectionClass($handler);
-
-        $reflectionProperty = $reflection->getProperty('initialized');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($handler, true);
-
-        $reflectionProperty = $reflection->getProperty('uploadSequenceToken');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($handler, $token);
-
-        $reflectionMethod = $reflection->getMethod('write');
-        $reflectionMethod->setAccessible(true);
-        $reflectionMethod->invoke($handler, ['formatted' => $logString]);
-    }
-
-
-    public function testShouldBatch()
-    {
-        $this
-            ->clientMock
-            ->expects($this->once())
-            ->method('PutLogEvents')
-            ->willReturn($this->awsResultMock);
-
-        $handler = new CloudWatch($this->clientMock, 'test-log-group-name', 'test-log-stream-name');
-
-        $reflection = new \ReflectionClass($handler);
-
-        $reflectionProperty = $reflection->getProperty('initialized');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($handler, true);
-
-        $handler->handleBatch(
-            [
+        $logStreamResult = new Result([
+            'logStreams' => [
                 [
-                    'channel' => 'test',
-                    'extra' => [],
-                    'level' => 0,
-                    'level_name' => 'TEST',
-                    'message' => 'Unformatted log string 1',
-                    'context' => []
-                ],
-                [
-                    'channel' => 'test',
-                    'extra' => [],
-                    'level' => 100,
-                    'level_name' => 'TEST',
-                    'message' => 'Unformatted log string 2',
-                    'context' => []
-                ],
-                [
-                    'channel' => 'test',
-                    'extra' => [],
-                    'level' => 200,
-                    'level_name' => 'TEST',
-                    'message' => 'Unformatted log string 3',
-                    'context' => []
-                ],
-                [
-                    'channel' => 'test',
-                    'extra' => [],
-                    'level' => 300,
-                    'level_name' => 'TEST',
-                    'message' => 'Unformatted log string 4',
-                    'context' => []
-                ],
-                [
-                    'channel' => 'test',
-                    'extra' => [],
-                    'level' => 400,
-                    'level_name' => 'TEST',
-                    'message' => 'Unformatted log string 5',
-                    'context' => []
+                    'logStreamName' => $this->streamName,
+                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
+        ]);
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('describeLogStreams')
+            ->with([
+                'logGroupName' => $this->groupName,
+                'logStreamNamePrefix' => $this->streamName,
+            ])
+            ->willReturn($logStreamResult);
+
+        $this->awsResultMock =
+            $this
+                ->getMockBuilder(Result::class)
+                ->setMethods(['get'])
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $this
+            ->clientMock
+            ->method('PutLogEvents')
+            ->willReturn($this->awsResultMock);
+    }
+
+    private function getCUT()
+    {
+        return new CloudWatch($this->clientMock, 'group', 'stream');
+    }
+
+    /**
+     * @param int $level
+     * @param string $message
+     * @param array $context
+     * @return array
+     */
+    private function getRecord($level = Logger::WARNING, $message = 'test', $context = array())
+    {
+        return array(
+            'message' => $message,
+            'context' => $context,
+            'level' => $level,
+            'level_name' => Logger::getLevelName($level),
+            'channel' => 'test',
+            'datetime' => \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true))),
+            'extra' => array(),
         );
     }
 
+    /**
+     * @return array
+     */
+    private function getMultipleRecords()
+    {
+        return array(
+            $this->getRecord(Logger::DEBUG, 'debug message 1'),
+            $this->getRecord(Logger::DEBUG, 'debug message 2'),
+            $this->getRecord(Logger::INFO, 'information'),
+            $this->getRecord(Logger::WARNING, 'warning'),
+            $this->getRecord(Logger::ERROR, 'error'),
+        );
+    }
 }

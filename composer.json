@@ -17,6 +17,7 @@
     },
     "minimum-stability": "stable",
     "require": {
+        "php": ">=7.0",
         "monolog/monolog": "^1.20",
         "aws/aws-sdk-php": "^3.18"
     },
