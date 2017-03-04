@@ -3,14 +3,14 @@ language: php
 php:
   - '5.6'
   - '7.0'
-  - nightly
 
 cache:
   directories:
   - "$HOME/.composer"
 
 before_script:
-  - composer install --no-interaction --dev -o
+  - composer validate
+  - composer install --no-interaction --dev -o --prefer-dist
 
 script:
   - php -l src/

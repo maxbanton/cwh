@@ -3,66 +3,113 @@
 namespace Maxbanton\Cwh\Handler;
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
-use Monolog\Logger;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Logger;
 
 class CloudWatch extends AbstractProcessingHandler
 {
-    const BATCH_SIZE = 50;
+    /**
+     * @var CloudWatchLogsClient
+     */
+    private $client;
+
+    /**
+     * @var string
+     */
+    private $group;
+
+    /**
+     * @var string
+     */
+    private $stream;
+
+    /**
+     * @var integer
+     */
+    private $retention;
 
     /**
      * @var bool
      */
     private $initialized = false;
-    /**
-     * @var CloudWatchLogsClient
-     */
-    private $client;
+
     /**
      * @var string
      */
-    private $logGroupName;
-    /**
-     * @var string
-     */
-    private $logStreamName;
-    /**
-     * @var string
-     */
-    private $uploadSequenceToken;
+    private $sequenceToken;
+
     /**
      * @var int
      */
-    private $retentionDays;
+    private $batchSize;
+
     /**
      * @var array
      */
     private $buffer = [];
 
     /**
-     * CloudWatchHandler constructor.
+     * @var array
+     */
+    private $tags = [];
+
+    /**
+     * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
      *
+     * @var int
+     */
+    private $dataAmountLimit = 1048576;
+
+    /**
+     * @var int
+     */
+    private $currentDataAmount = 0;
+
+    /**
+     * CloudWatchLogs constructor.
      * @param CloudWatchLogsClient $client
-     * @param string $logGroupName
-     * @param string $logStreamName
-     * @param int $retentionDays
+     *
+     *  Log group names must be unique within a region for an AWS account.
+     *  Log group names can be between 1 and 512 characters long.
+     *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen),
+     * '/' (forward slash), and '.' (period).
+     * @param string $group
+     *
+     *  Log stream names must be unique within the log group.
+     *  Log stream names can be between 1 and 512 characters long.
+     *  The ':' (colon) and '*' (asterisk) characters are not allowed.
+     * @param string $stream
+     *
+     * @param int $retention
+     * @param int $batchSize
+     * @param array $tags
      * @param int $level
      * @param bool $bubble
      */
     public function __construct(
         CloudWatchLogsClient $client,
-        $logGroupName,
-        $logStreamName,
-        $retentionDays = 7,
+        $group,
+        $stream,
+        $retention = 14,
+        $batchSize = 10000,
+        array $tags = [],
         $level = Logger::DEBUG,
         $bubble = true
     ) {
+        if ($batchSize > 10000) {
+            throw new \InvalidArgumentException('Batch size can not be greater than 10000');
+        }
+
         $this->client = $client;
-        $this->logGroupName = $logGroupName;
-        $this->logStreamName = $logStreamName;
-        $this->retentionDays = $retentionDays;
+        $this->group = $group;
+        $this->stream = $stream;
+        $this->retention = $retention;
+        $this->batchSize = $batchSize;
+        $this->tags = $tags;
 
         parent::__construct($level, $bubble);
+        register_shutdown_function([$this, 'close']);
     }
 
     /**
@@ -70,84 +117,95 @@ class CloudWatch extends AbstractProcessingHandler
      */
     protected function write(array $record)
     {
-        if (count($this->buffer) >= self::BATCH_SIZE) {
-            $this->flushMessages($this->buffer);
-            $this->buffer = [$record];
+        $record = $this->formatRecord($record);
+
+        if ($this->currentDataAmount + $this->getMessageSize($record) >= $this->dataAmountLimit ||
+            count($this->buffer) >= $this->batchSize
+        ) {
+            $this->flushBuffer();
+            $this->addToBuffer($record);
         } else {
-            $this->buffer[] = $record;
+            $this->addToBuffer($record);
         }
     }
 
     /**
-     * {@inheritdoc}
+     * @param array $record
      */
-    public function close()
+    private function addToBuffer(array $record)
+    {
+        $this->currentDataAmount += $this->getMessageSize($record);
+
+        $this->buffer[] = $record;
+    }
+
+    private function flushBuffer()
     {
         if (!empty($this->buffer)) {
-            $this->flushMessages($this->buffer);
+            // send items
+            $this->send($this->buffer);
+            // clear buffer
+            $this->buffer = [];
+            // clear data amount
+            $this->currentDataAmount = 0;
         }
     }
 
     /**
-     * {@inheritdoc}
+     * http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
+     *
+     * @param $record
+     * @return int
      */
-    public function handleBatch(array $records)
+    private function getMessageSize($record)
     {
-        foreach (array_chunk($records, self::BATCH_SIZE) as $chunk) {
-            $this->handleChunk($chunk);
-        }
+        return strlen($record['message']) + 26;
     }
 
-    protected function handleChunk(array $records)
+    /**
+     * @param array $entry
+     * @return array
+     */
+    private function formatRecord(array $entry)
     {
-        $messages = [];
-        foreach ($records as $record) {
-            if ($record['level'] < $this->level) {
-                continue;
-            }
-
-            // @FIXME: Correct way to handle logs ?
-            $record = $this->processRecord($record);
-            $record['formatted'] = $this->getFormatter()->format($record);
-
-            $messages[] = $record;
-        }
-
-        if (!empty($messages)) {
-            $this->flushMessages($messages);
-        }
+        return [
+            'message' => $entry['formatted'],
+            'timestamp' => $entry['datetime']->getTimestamp() * 1000
+        ];
     }
 
-    protected function flushMessages($messages)
+    /**
+     * The batch of events must satisfy the following constraints:
+     *  - The maximum batch size is 1,048,576 bytes, and this size is calculated as the sum of all event messages in
+     * UTF-8, plus 26 bytes for each log event.
+     *  - None of the log events in the batch can be more than 2 hours in the future.
+     *  - None of the log events in the batch can be older than 14 days or the retention period of the log group.
+     *  - The log events in the batch must be in chronological ordered by their timestamp (the time the event occurred,
+     * expressed as the number of milliseconds since Jan 1, 1970 00:00:00 UTC).
+     *  - The maximum number of log events in a batch is 10,000.
+     *  - A batch of log events in a single request cannot span more than 24 hours. Otherwise, the operation fails.
+     *
+     * @param array $entries
+     */
+    private function send(array $entries)
     {
-        if (!$this->initialized) {
+        if (false === $this->initialized) {
             $this->initialize();
         }
 
-        $events = [];
-
-        foreach ($messages as $message) {
-            $events[] = [
-                'message' => $message['formatted'],
-                'timestamp' => round(microtime(true) * 1000),
-            ];
-        }
-
         $data = [
-            'logGroupName' => $this->logGroupName,
-            'logStreamName' => $this->logStreamName,
-            'logEvents' => $events
+            'logGroupName' => $this->group,
+            'logStreamName' => $this->stream,
+            'logEvents' => $entries
         ];
 
-        if ($this->uploadSequenceToken) {
-            $data['sequenceToken'] = $this->uploadSequenceToken;
+        if (!empty($this->sequenceToken)) {
+            $data['sequenceToken'] = $this->sequenceToken;
         }
 
-        // put log to AWS
         $response = $this->client->putLogEvents($data);
 
-        // update sequence token
-        $this->uploadSequenceToken = $response->get('nextSequenceToken');
+        $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
     private function initialize()
@@ -156,11 +214,8 @@ class CloudWatch extends AbstractProcessingHandler
         $existingGroups =
             $this
                 ->client
-                ->describeLogGroups(
-                    [
-                        'logGroupNamePrefix' => $this->logGroupName
-                    ]
-                )->get('logGroups');
+                ->describeLogGroups(['logGroupNamePrefix' => $this->group])
+                ->get('logGroups');
 
         // extract existing groups names
         $existingGroupsNames = array_map(
@@ -171,20 +226,21 @@ class CloudWatch extends AbstractProcessingHandler
         );
 
         // create group and set retention policy if not created yet
-        if (!in_array($this->logGroupName, $existingGroupsNames, true)) {
+        if (!in_array($this->group, $existingGroupsNames, true)) {
             $this
                 ->client
                 ->createLogGroup(
                     [
-                        'logGroupName' => $this->logGroupName,
+                        'logGroupName' => $this->group,
+                        'tags' => $this->tags
                     ]
                 );
             $this
                 ->client
                 ->putRetentionPolicy(
                     [
-                        'logGroupName' => $this->logGroupName,
-                        'retentionInDays' => $this->retentionDays,
+                        'logGroupName' => $this->group,
+                        'retentionInDays' => $this->retention,
                     ]
                 );
         }
@@ -195,8 +251,8 @@ class CloudWatch extends AbstractProcessingHandler
                 ->client
                 ->describeLogStreams(
                     [
-                        'logGroupName' => $this->logGroupName,
-                        'logStreamNamePrefix' => $this->logStreamName,
+                        'logGroupName' => $this->group,
+                        'logStreamNamePrefix' => $this->stream,
                     ]
                 )->get('logStreams');
 
@@ -205,8 +261,8 @@ class CloudWatch extends AbstractProcessingHandler
             function ($stream) {
 
                 // set sequence token
-                if ($stream['logStreamName'] === $this->logStreamName && isset($stream['uploadSequenceToken'])) {
-                    $this->uploadSequenceToken = $stream['uploadSequenceToken'];
+                if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
+                    $this->sequenceToken = $stream['uploadSequenceToken'];
                 }
 
                 return $stream['logStreamName'];
@@ -215,17 +271,43 @@ class CloudWatch extends AbstractProcessingHandler
         );
 
         // create stream if not created
-        if (!in_array($this->logStreamName, $existingStreamsNames, true)) {
+        if (!in_array($this->stream, $existingStreamsNames, true)) {
             $this
                 ->client
                 ->createLogStream(
                     [
-                        'logGroupName' => $this->logGroupName,
-                        'logStreamName' => $this->logStreamName
+                        'logGroupName' => $this->group,
+                        'logStreamName' => $this->stream
                     ]
                 );
         }
 
         $this->initialized = true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getDefaultFormatter()
+    {
+        return new LineFormatter("%level_name%: %message% %context% %extra%\n");
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function close()
+    {
+        $this->flushBuffer();
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    public function __destruct()
+    {
+        // suppress the parent behavior since we already have register_shutdown_function()
+        // to call close(), and the reference contained there will prevent this from being
+        // GC'd until the end of the request
     }
 }
