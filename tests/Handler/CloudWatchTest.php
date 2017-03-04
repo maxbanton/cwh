@@ -156,15 +156,24 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
         (new CloudWatch($this->clientMock, 'a', 'b', 14, 10001));
     }
 
-    public function testHandleBuffers()
+    public function testDataAmountLimit()
     {
-        $this->prepareMocks();
-        $handler = $this->getCUT();
+        $this->markTestIncomplete('To implement');
+    }
 
-        $handler->handle($this->getRecord(Logger::DEBUG));
-        $handler->handle($this->getRecord(Logger::INFO));
+    public function testItemsCountLimit()
+    {
+        $this->markTestIncomplete('To implement');
+    }
 
-        $handler->close();
+    public function testLessItemsThatLimitSends()
+    {
+        $this->markTestIncomplete('To implement');
+    }
+
+    public function testSendsOnDestruct()
+    {
+        $this->markTestIncomplete('To implement');
     }
 
     private function prepareMocks()
