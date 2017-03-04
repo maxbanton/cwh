@@ -73,7 +73,8 @@ class CloudWatch extends AbstractProcessingHandler
      *
      *  Log group names must be unique within a region for an AWS account.
      *  Log group names can be between 1 and 512 characters long.
-     *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), and '.' (period).
+     *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen),
+     * '/' (forward slash), and '.' (period).
      * @param string $group
      *
      *  Log stream names must be unique within the log group.
@@ -176,10 +177,12 @@ class CloudWatch extends AbstractProcessingHandler
 
     /**
      * The batch of events must satisfy the following constraints:
-     *  - The maximum batch size is 1,048,576 bytes, and this size is calculated as the sum of all event messages in UTF-8, plus 26 bytes for each log event.
+     *  - The maximum batch size is 1,048,576 bytes, and this size is calculated as the sum of all event messages in
+     * UTF-8, plus 26 bytes for each log event.
      *  - None of the log events in the batch can be more than 2 hours in the future.
      *  - None of the log events in the batch can be older than 14 days or the retention period of the log group.
-     *  - The log events in the batch must be in chronological ordered by their timestamp (the time the event occurred, expressed as the number of milliseconds since Jan 1, 1970 00:00:00 UTC).
+     *  - The log events in the batch must be in chronological ordered by their timestamp (the time the event occurred,
+     * expressed as the number of milliseconds since Jan 1, 1970 00:00:00 UTC).
      *  - The maximum number of log events in a batch is 10,000.
      *  - A batch of log events in a single request cannot span more than 24 hours. Otherwise, the operation fails.
      *
