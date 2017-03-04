@@ -299,6 +299,9 @@ class CloudWatch extends AbstractProcessingHandler
         $this->flushBuffer();
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function __destruct()
     {
         // suppress the parent behavior since we already have register_shutdown_function()

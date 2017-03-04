@@ -6,6 +6,7 @@ namespace Maxbanton\Cwh\Test\Handler;
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Aws\Result;
 use Maxbanton\Cwh\Handler\CloudWatch;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
 
 class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
@@ -156,24 +157,51 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
         (new CloudWatch($this->clientMock, 'a', 'b', 14, 10001));
     }
 
-    public function testDataAmountLimit()
+    public function testSendsOnClose()
     {
-        $this->markTestIncomplete('To implement');
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('PutLogEvents')
+            ->willReturn($this->awsResultMock);
+
+        $handler = $this->getCUT(1);
+
+        $handler->handle($this->getRecord(Logger::DEBUG));
+
+        $handler->close();
     }
 
-    public function testItemsCountLimit()
+    public function testSendsBatches()
     {
-        $this->markTestIncomplete('To implement');
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+            ->expects($this->exactly(2))
+            ->method('PutLogEvents')
+            ->willReturn($this->awsResultMock);
+
+        $handler = $this->getCUT(3);
+
+        foreach ($this->getMultipleRecords() as $record) {
+            $handler->handle($record);
+        }
+
+        $handler->close();
     }
 
-    public function testLessItemsThatLimitSends()
+    public function testFormatter()
     {
-        $this->markTestIncomplete('To implement');
-    }
+        $handler = $this->getCUT();
 
-    public function testSendsOnDestruct()
-    {
-        $this->markTestIncomplete('To implement');
+        $formatter = $handler->getFormatter();
+
+        $expected = new LineFormatter("%level_name%: %message% %context% %extra%\n");
+
+        $this->assertEquals($expected, $formatter);
     }
 
     private function prepareMocks()
@@ -212,16 +240,11 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
                 ->setMethods(['get'])
                 ->disableOriginalConstructor()
                 ->getMock();
-
-        $this
-            ->clientMock
-            ->method('PutLogEvents')
-            ->willReturn($this->awsResultMock);
     }
 
-    private function getCUT()
+    private function getCUT($batchSize = 1000)
     {
-        return new CloudWatch($this->clientMock, 'group', 'stream');
+        return new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, $batchSize);
     }
 
     /**
