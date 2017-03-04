@@ -7,9 +7,8 @@ use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Aws\Result;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 
-class CloudWatchLogsTest extends TestCase
+class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
