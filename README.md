@@ -21,8 +21,43 @@ Please press **&#9733; Star** button if you find this library useful.
 Install the latest version with [Composer](https://getcomposer.org/)
 
 ```bash
-$ composer require maxbanton/cwh
+$ composer require maxbanton/cwh:^1.0
 ```
+
+## Upgrade
+Change in your composer.json
+```
+{
+  "require": {
+    "maxbanton/cwh": "^0.0.3"
+  }
+}
+```
+to
+```
+{
+  "require": {
+    "maxbanton/cwh": "^1.0"
+  }
+}
+```
+then run
+```bash
+$ composer update
+```
+and change your code
+```php
+<?php
+// Instantiate handler
+$handler = new CloudWatch($client, $logGroupName, $logStreamName, $daysToRetention);
+```
+to
+```php
+<?php
+// Instantiate handler
+$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
+```
+
 ## Basic Usage
 ```php
 <?php
