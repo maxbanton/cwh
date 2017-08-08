@@ -227,14 +227,14 @@ class CloudWatch extends AbstractProcessingHandler
 
         // create group and set retention policy if not created yet
         if (!in_array($this->group, $existingGroupsNames, true)) {
+            $createLogGroupArguments = ['logGroupName' => $this->group];
+            if(count($this->tags) > 0){
+                $createLogGroupArguments['tags'] = $this->tags;
+            }
+            
             $this
                 ->client
-                ->createLogGroup(
-                    [
-                        'logGroupName' => $this->group,
-                        'tags' => $this->tags
-                    ]
-                );
+                ->createLogGroup($createLogGroupArguments);
             $this
                 ->client
                 ->putRetentionPolicy(
