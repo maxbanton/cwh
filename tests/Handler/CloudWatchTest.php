@@ -104,7 +104,7 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
             ->clientMock
             ->expects($this->once())
             ->method('createLogGroup')
-            ->with(['logGroupName' => $this->groupName, 'tags' => []]);
+            ->with(['logGroupName' => $this->groupName]);
 
         $this
             ->clientMock
