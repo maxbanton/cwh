@@ -74,7 +74,7 @@ $sdkParams = [
     'credentials' => [
         'key' => 'your AWS key',
         'secret' => 'your AWS secret',
-        'token' => 'your AWS session token',
+        'token' => 'your AWS session token ( optional )',
     ]
 ];
 
