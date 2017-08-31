@@ -143,8 +143,6 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
 
     public function testInitializeWithEmptyTags()
     {
-        $tags = array();
-
         $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName . 'foo']]]);
 
         $this
@@ -179,7 +177,7 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
             ])
             ->willReturn($logStreamResult);
 
-        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, 10000, $tags);
+        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName);
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');
