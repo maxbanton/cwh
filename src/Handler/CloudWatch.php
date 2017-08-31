@@ -170,7 +170,7 @@ class CloudWatch extends AbstractProcessingHandler
     {
         return [
             'message' => $entry['formatted'],
-            'timestamp' => $entry['datetime']->getTimestamp() * 1000
+            'timestamp' => $entry['datetime']->format('U.u') * 1000
         ];
     }
 
