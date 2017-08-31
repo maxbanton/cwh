@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "1dbb3bdc340eaa4a4c40a6aa25e1b9e2",
+    "content-hash": "d2f5e7905ba2185902a954e4cfa5d4a2",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -1184,16 +1184,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "5.5.4",
+            "version": "5.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "3e6e88e56c912133de6e99b87728cca7ed70c5f5"
+                "reference": "3132365e1430c091f208e120b8845d39c25f20e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/3e6e88e56c912133de6e99b87728cca7ed70c5f5",
-                "reference": "3e6e88e56c912133de6e99b87728cca7ed70c5f5",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/3132365e1430c091f208e120b8845d39c25f20e6",
+                "reference": "3132365e1430c091f208e120b8845d39c25f20e6",
                 "shasum": ""
             },
             "require": {
@@ -1232,7 +1232,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "5.5.x-dev"
+                    "dev-master": "5.4.x-dev"
                 }
             },
             "autoload": {
@@ -1258,7 +1258,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2016-08-26T07:11:44+00:00"
+            "time": "2016-07-26T14:48:00+00:00"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
