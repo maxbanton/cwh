@@ -229,7 +229,7 @@ class CloudWatch extends AbstractProcessingHandler
         if (!in_array($this->group, $existingGroupsNames, true)) {
             $createLogGroupArguments = ['logGroupName' => $this->group];
 
-            if (!empty($this->tags) > 0) {
+            if (!empty($this->tags)) {
                 $createLogGroupArguments['tags'] = $this->tags;
             }
             
