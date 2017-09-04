@@ -56,7 +56,7 @@ $handler = new CloudWatch($client, $logGroupName, $logStreamName, $daysToRetenti
 to
 ```php
 <?php
-// Instantiate handler
+// Instantiate handler (tags are optional)
 $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
 ```
 
@@ -74,7 +74,7 @@ $sdkParams = [
     'credentials' => [
         'key' => 'your AWS key',
         'secret' => 'your AWS secret',
-        'token' => 'your AWS session token ( optional )',
+        'token' => 'your AWS session token', // token is optional
     ]
 ];
 
