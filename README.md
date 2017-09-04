@@ -90,7 +90,7 @@ $streamName = 'ec2-instance-1';
 // Days to keep logs, 14 by default
 $retentionDays = 30;
 
-// Instantiate handler
+// Instantiate handler (tags are optional)
 $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
 
 // Create a log channel
