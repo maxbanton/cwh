@@ -1,6 +1,3 @@
-# :tada: Almost 50K of downloads!
-[![changes](http://img.youtube.com/vi/p7n5KpLStPw/hqdefault.jpg)](https://www.youtube.com/watch?v=p7n5KpLStPw)
-
 # AWS CloudWatch Logs Handler for Monolog
 
 [![Build Status](https://img.shields.io/travis/maxbanton/cwh/master.svg)](https://travis-ci.org/maxbanton/cwh)
