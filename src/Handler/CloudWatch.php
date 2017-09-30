@@ -112,6 +112,11 @@ class CloudWatch extends AbstractProcessingHandler
         register_shutdown_function([$this, 'close']);
     }
 
+    public function __clone()
+    {
+        register_shutdown_function([$this, 'close']);
+    }
+
     /**
      * {@inheritdoc}
      */
