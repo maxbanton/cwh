@@ -11,7 +11,7 @@ Handler for PHP logging library [Monolog](https://github.com/Seldaek/monolog) fo
 
 Before using this library, it's recommended to get acquainted with the [pricing](https://aws.amazon.com/en/cloudwatch/pricing/) for AWS CloudWatch services.
 
-Please press **&#9733; Star** button if you find this library useful.
+Please press **&#9733; Star** button if you find this library useful, aslo you can [donate](#donate) if you like to.
 
 ## Features
 * Up to 10000 batch logs sending in order to avoid _Rate exceeded_ errors 
