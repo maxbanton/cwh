@@ -118,3 +118,6 @@ Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
 
 ## Contributing
 Please check [this document](https://github.com/maxbanton/cwh/blob/master/CONTRIBUTING.md)
+
+## Donate
+If you would like to, you can send any amount of BTC to the wallet `12d3VXfvPiQ5bFMfPppGqpwnNSkZwigBVt`
