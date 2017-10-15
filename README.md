@@ -18,6 +18,7 @@ Please press **&#9733; Star** button if you find this library useful, aslo you c
 * Log Groups creating with tags
 * AWS CloudWatch Logs staff lazy loading
 * Suitable for web applications and for long-living CLI daemons and workers
+* Compatible with PHP 5.6 / 7.0 / 7.1
 
 ## Installation
 Install the latest version with [Composer](https://getcomposer.org/)
