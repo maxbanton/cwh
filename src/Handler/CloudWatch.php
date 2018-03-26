@@ -69,7 +69,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
      */
-    private const RPS_LIMIT = 5;
+    const RPS_LIMIT = 5;
 
     /**
      * @var int
