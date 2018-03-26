@@ -11,7 +11,7 @@ cache:
 
 before_script:
   - composer validate
-  - composer install --no-interaction -o --prefer-dist
+  - composer install --no-interaction -o --prefer-dist --no-suggest
 
 script:
   - php -l src/
