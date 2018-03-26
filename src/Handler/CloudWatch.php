@@ -67,6 +67,21 @@ class CloudWatch extends AbstractProcessingHandler
     private $currentDataAmount = 0;
 
     /**
+     * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
+     */
+    const RPS_LIMIT = 5;
+
+    /**
+     * @var int
+     */
+    private $remainingRequests = self::RPS_LIMIT;
+
+    /**
+     * @var \DateTime
+     */
+    private $savedTime;
+
+    /**
      * CloudWatchLogs constructor.
      * @param CloudWatchLogsClient $client
      *
@@ -110,6 +125,8 @@ class CloudWatch extends AbstractProcessingHandler
 
         parent::__construct($level, $bubble);
         register_shutdown_function([$this, 'close']);
+
+        $this->savedTime = new \DateTime;
     }
 
     public function __clone()
@@ -154,6 +171,24 @@ class CloudWatch extends AbstractProcessingHandler
             // clear data amount
             $this->currentDataAmount = 0;
         }
+    }
+
+    private function checkThrottle()
+    {
+        $current = new \DateTime();
+        $diff = $current->diff($this->savedTime)->s;
+        $sameSecond = $diff === 0;
+
+        if ($sameSecond && $this->remainingRequests > 0) {
+            $this->remainingRequests--;
+        } elseif ($sameSecond && $this->remainingRequests === 0) {
+            sleep(1);
+            $this->remainingRequests = self::RPS_LIMIT;
+        } elseif (!$sameSecond) {
+            $this->remainingRequests = self::RPS_LIMIT;
+        }
+
+        $this->savedTime = new \DateTime();
     }
 
     /**
@@ -208,6 +243,8 @@ class CloudWatch extends AbstractProcessingHandler
             $data['sequenceToken'] = $this->sequenceToken;
         }
 
+        $this->checkThrottle();
+
         $response = $this->client->putLogEvents($data);
 
         $this->sequenceToken = $response->get('nextSequenceToken');
@@ -237,7 +274,7 @@ class CloudWatch extends AbstractProcessingHandler
             if (!empty($this->tags)) {
                 $createLogGroupArguments['tags'] = $this->tags;
             }
-            
+
             $this
                 ->client
                 ->createLogGroup($createLogGroupArguments);
