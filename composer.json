@@ -1,34 +1,38 @@
 {
     "name": "maxbanton/cwh",
-    "description": "AWS CloudWatch Handler for Monolog library",
     "type": "library",
+    "description": "AWS CloudWatch Handler for Monolog library",
+    "keywords": [
+        "aws",
+        "cloudwatch",
+        "monolog"
+    ],
     "license": "MIT",
-    "keywords": ["aws", "cloudwatch", "monolog"],
     "authors": [
         {
             "name": "Max Leonov",
             "email": "hi@maxleonov.pw"
         }
     ],
+    "require": {
+        "php": ">=5.6.0",
+        "aws/aws-sdk-php": "^3.18",
+        "monolog/monolog": "^1.20"
+    },
+    "require-dev": {
+        "maxbanton/dd": "^1.0",
+        "php-coveralls/php-coveralls": "^2.0",
+        "phpunit/phpunit": "^5.6",
+        "squizlabs/php_codesniffer": "2.*"
+    },
     "autoload": {
         "psr-4": {
             "Maxbanton\\Cwh\\": "src"
         }
     },
     "minimum-stability": "stable",
-    "require": {
-        "php": ">=5.6.0",
-        "monolog/monolog": "^1.20",
-        "aws/aws-sdk-php": "^3.18"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^5.6",
-        "squizlabs/php_codesniffer": "2.*",
-        "php-coveralls/php-coveralls": "^2.0",
-        "maxbanton/dd": "^1.0"
-    },
     "scripts": {
-      "fix-syntax": "vendor/bin/phpcbf --standard=psr2 src/",
-      "check-syntax": "vendor/bin/phpcs --standard=psr2 --ignore=Tests src/"
+        "check-syntax": "vendor/bin/phpcs --standard=psr2 --ignore=Tests src/",
+        "fix-syntax": "vendor/bin/phpcbf --standard=psr2 src/"
     }
 }
