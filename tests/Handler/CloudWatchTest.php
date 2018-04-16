@@ -8,8 +8,9 @@ use Aws\Result;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
+use PHPUnit\Framework\TestCase;
 
-class CloudWatchTest extends \PHPUnit_Framework_TestCase
+class CloudWatchTest extends TestCase
 {
 
     /**
