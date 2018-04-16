@@ -10,14 +10,18 @@ cache:
   directories:
   - "$HOME/.composer"
 
-before_script:
+before_install:
   - composer validate
+  
+install:
   - composer install --no-interaction -o --prefer-dist --no-suggest
+  
+before_script:
+  - mkdir -p build/logs
 
 script:
   - php -l src/
   - composer check-syntax
-  - mkdir -p build/logs
   - vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
 after_script:
