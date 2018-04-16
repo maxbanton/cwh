@@ -9,7 +9,7 @@ use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
 
-class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
+class CloudWatchTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
