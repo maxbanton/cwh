@@ -32,7 +32,7 @@ class CloudWatchTest extends \PHPUnit_Framework_TestCase
      */
     private $streamName = 'stream';
 
-    public function setUp()
+    protected function setUp()
     {
         $this->clientMock =
             $this
