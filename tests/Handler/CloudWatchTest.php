@@ -349,17 +349,17 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
      * @param array $context
      * @return array
      */
-    private function getRecord($level = Logger::WARNING, $message = 'test', $context = array())
+    private function getRecord($level = Logger::WARNING, $message = 'test', $context = [])
     {
-        return array(
+        return [
             'message' => $message,
             'context' => $context,
             'level' => $level,
             'level_name' => Logger::getLevelName($level),
             'channel' => 'test',
             'datetime' => \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true))),
-            'extra' => array(),
-        );
+            'extra' => [],
+        ];
     }
 
     /**
@@ -367,12 +367,12 @@ class CloudWatchLogsTest extends \PHPUnit_Framework_TestCase
      */
     private function getMultipleRecords()
     {
-        return array(
+        return [
             $this->getRecord(Logger::DEBUG, 'debug message 1'),
             $this->getRecord(Logger::DEBUG, 'debug message 2'),
             $this->getRecord(Logger::INFO, 'information'),
             $this->getRecord(Logger::WARNING, 'warning'),
             $this->getRecord(Logger::ERROR, 'error'),
-        );
+        ];
     }
 }
