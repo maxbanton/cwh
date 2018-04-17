@@ -17,5 +17,6 @@
   
   - PHP Version:
   - Operating system (distro):
+  - Application mode (web app / cli app / daemon cli app):
 
 * **Other information** (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links to have context, eg. stackoverflow, etc)
