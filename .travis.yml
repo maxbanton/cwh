@@ -14,7 +14,7 @@ before_install:
   - composer validate
   
 install:
-  - composer install --no-interaction -o --prefer-dist --no-suggest
+  - composer install --no-interaction -o --no-suggest
   
 before_script:
   - mkdir -p build/logs
