@@ -15,7 +15,7 @@
 
 * **Please tell about your environment:**
   
-  - PHP Version: 7.1
-  - Operating system (distro): Ubuntu / Debian
+  - PHP Version:
+  - Operating system (distro):
 
 * **Other information** (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links to have context, eg. stackoverflow, etc)
