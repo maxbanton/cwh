@@ -188,7 +188,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
      *
-     * @param $record
+     * @param array $record
      * @return int
      */
     private function getMessageSize($record)
