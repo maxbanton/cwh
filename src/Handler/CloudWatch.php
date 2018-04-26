@@ -273,7 +273,7 @@ class CloudWatch extends AbstractProcessingHandler
                 ->client
                 ->createLogGroup($createLogGroupArguments);
                 
-            if ($this->retention != null) {
+            if ($this->retention !== null) {
                 $this
 	                ->client
 	                ->putRetentionPolicy(
