@@ -272,14 +272,17 @@ class CloudWatch extends AbstractProcessingHandler
             $this
                 ->client
                 ->createLogGroup($createLogGroupArguments);
-            $this
-                ->client
-                ->putRetentionPolicy(
-                    [
-                        'logGroupName' => $this->group,
-                        'retentionInDays' => $this->retention,
-                    ]
-                );
+                
+            if ($this->retention != null) {
+                $this
+	                ->client
+	                ->putRetentionPolicy(
+	                    [
+	                        'logGroupName' => $this->group,
+	                        'retentionInDays' => $this->retention,
+	                    ]
+	                );
+            }
         }
 
         // fetch existing streams
