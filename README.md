@@ -82,7 +82,7 @@ $groupName = 'php-logtest';
 // Log stream name, will be created if none
 $streamName = 'ec2-instance-1';
 
-// Days to keep logs, 14 by default
+// Days to keep logs, 14 by default. Set to `null` to allow indefinite retention.
 $retentionDays = 30;
 
 // Instantiate handler (tags are optional)
