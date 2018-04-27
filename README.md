@@ -116,4 +116,9 @@ Please check [this document](https://github.com/maxbanton/cwh/blob/master/CONTRI
 
 ## Donate
 If you would like to, you can send any amount of BTC to the wallet `12d3VXfvPiQ5bFMfPppGqpwnNSkZwigBVt`
-![Donate](https://monosnap.com/file/uv8lk8VrWzEywdUCmkfy4NCRg9qok3.png)
+
+![Donate BTC](https://monosnap.com/file/uv8lk8VrWzEywdUCmkfy4NCRg9qok3.png)
+
+or ETHER to the wallet `0xd6C9d9Af4b03a11223C67067782E30194D9adAEb`
+
+![Donate ETHER](https://monosnap.com/image/4nsT44MoNd7Y4OkC9rJWmy1yyvCh8r.png)
