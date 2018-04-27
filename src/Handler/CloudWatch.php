@@ -275,13 +275,13 @@ class CloudWatch extends AbstractProcessingHandler
                 
             if ($this->retention !== null) {
                 $this
-	                ->client
-	                ->putRetentionPolicy(
-	                    [
-	                        'logGroupName' => $this->group,
-	                        'retentionInDays' => $this->retention,
-	                    ]
-	                );
+                    ->client
+                    ->putRetentionPolicy(
+                        [
+                            'logGroupName' => $this->group,
+                            'retentionInDays' => $this->retention,
+                        ]
+                    );
             }
         }
 
