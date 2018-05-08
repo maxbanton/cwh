@@ -10,6 +10,18 @@ use Monolog\Logger;
 class CloudWatch extends AbstractProcessingHandler
 {
     /**
+     * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
+     */
+    const RPS_LIMIT = 5;
+
+    /**
+     * Event size limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
+     *
+     * @var int
+     */
+    const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
+
+    /**
      * @var CloudWatchLogsClient
      */
     private $client;
@@ -65,11 +77,6 @@ class CloudWatch extends AbstractProcessingHandler
      * @var int
      */
     private $currentDataAmount = 0;
-
-    /**
-     * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
-     */
-    const RPS_LIMIT = 5;
 
     /**
      * @var int
@@ -133,15 +140,17 @@ class CloudWatch extends AbstractProcessingHandler
      */
     protected function write(array $record)
     {
-        $record = $this->formatRecord($record);
+        $records = $this->formatRecords($record);
 
-        if ($this->currentDataAmount + $this->getMessageSize($record) >= $this->dataAmountLimit ||
-            count($this->buffer) >= $this->batchSize
-        ) {
-            $this->flushBuffer();
-            $this->addToBuffer($record);
-        } else {
-            $this->addToBuffer($record);
+        foreach ($records as $record) {
+            if ($this->currentDataAmount + $this->getMessageSize($record) >= $this->dataAmountLimit ||
+                count($this->buffer) >= $this->batchSize
+            ) {
+                $this->flushBuffer();
+                $this->addToBuffer($record);
+            } else {
+                $this->addToBuffer($record);
+            }
         }
     }
 
@@ -197,15 +206,26 @@ class CloudWatch extends AbstractProcessingHandler
     }
 
     /**
+     * Event size in the batch can not be bigger than 256 KB
+     * https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html
+     *
      * @param array $entry
      * @return array
      */
-    private function formatRecord(array $entry)
+    private function formatRecords(array $entry)
     {
-        return [
-            'message' => $entry['formatted'],
-            'timestamp' => $entry['datetime']->format('U.u') * 1000
-        ];
+        $entries = str_split($entry['formatted'], self::EVENT_SIZE_LIMIT);
+        $timestamp = $entry['datetime']->format('U.u') * 1000;
+        $records = [];
+
+        foreach ($entries as $entry) {
+            $records[] = [
+                'message' => $entry,
+                'timestamp' => $timestamp
+            ];
+        }
+
+        return $records;
     }
 
     /**
@@ -272,7 +292,7 @@ class CloudWatch extends AbstractProcessingHandler
             $this
                 ->client
                 ->createLogGroup($createLogGroupArguments);
-                
+
             if ($this->retention !== null) {
                 $this
                     ->client
