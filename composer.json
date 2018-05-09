@@ -11,9 +11,14 @@
     "authors": [
         {
             "name": "Max Leonov",
-            "email": "hi@maxleonov.pw"
+            "email": "hi@maxleonov.pw",
+            "homepage": "https://maxleonov.pw"
         }
     ],
+    "support": {
+        "issues": "https://github.com/maxbanton/cwh/issues",
+        "source": "https://github.com/maxbanton/cwh"
+    },
     "require": {
         "php": ">=5.6.0",
         "aws/aws-sdk-php": "^3.18",
@@ -36,6 +41,7 @@
     "minimum-stability": "stable",
     "scripts": {
         "check-syntax": "vendor/bin/phpcs --standard=psr2 --ignore=Tests src/",
-        "fix-syntax": "vendor/bin/phpcbf --standard=psr2 src/"
+        "fix-syntax": "vendor/bin/phpcbf --standard=psr2 src/",
+        "tests": "vendor/bin/phpunit"
     }
 }
