@@ -3,6 +3,7 @@
 namespace Maxbanton\Cwh\Handler;
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Aws\CloudWatchLogs\Exception\CloudWatchLogsException;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
@@ -88,27 +89,40 @@ class CloudWatch extends AbstractProcessingHandler
      */
     private $savedTime;
 
-    /**
-     * CloudWatchLogs constructor.
-     * @param CloudWatchLogsClient $client
-     *
-     *  Log group names must be unique within a region for an AWS account.
-     *  Log group names can be between 1 and 512 characters long.
-     *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen),
-     * '/' (forward slash), and '.' (period).
-     * @param string $group
-     *
-     *  Log stream names must be unique within the log group.
-     *  Log stream names can be between 1 and 512 characters long.
-     *  The ':' (colon) and '*' (asterisk) characters are not allowed.
-     * @param string $stream
-     *
-     * @param int $retention
-     * @param int $batchSize
-     * @param array $tags
-     * @param int $level
-     * @param bool $bubble
-     */
+	/**
+	 * @var int
+	 */
+    private $tokenRetries;
+
+	/**
+	 * @var bool
+	 */
+    private $throwOnInvalidToken;
+
+	/**
+	 * CloudWatchLogs constructor.
+	 *
+	 * @param CloudWatchLogsClient $client
+	 *
+	 *  Log group names must be unique within a region for an AWS account.
+	 *  Log group names can be between 1 and 512 characters long.
+	 *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen),
+	 * '/' (forward slash), and '.' (period).
+	 * @param string               $group
+	 *
+	 *  Log stream names must be unique within the log group.
+	 *  Log stream names can be between 1 and 512 characters long.
+	 *  The ':' (colon) and '*' (asterisk) characters are not allowed.
+	 * @param string               $stream
+	 *
+	 * @param int                  $retention
+	 * @param int                  $batchSize
+	 * @param array                $tags
+	 * @param int                  $level
+	 * @param bool                 $bubble
+	 * @param int                  $tokenRetries
+	 * @param bool                 $throwOnInvalidToken
+	 */
     public function __construct(
         CloudWatchLogsClient $client,
         $group,
@@ -117,7 +131,9 @@ class CloudWatch extends AbstractProcessingHandler
         $batchSize = 10000,
         array $tags = [],
         $level = Logger::DEBUG,
-        $bubble = true
+        $bubble = true,
+		$tokenRetries = 0,
+		$throwOnInvalidToken = true
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -129,6 +145,8 @@ class CloudWatch extends AbstractProcessingHandler
         $this->retention = $retention;
         $this->batchSize = $batchSize;
         $this->tags = $tags;
+        $this->tokenRetries = $tokenRetries;
+        $this->throwOnInvalidToken = $throwOnInvalidToken;
 
         parent::__construct($level, $bubble);
 
@@ -263,15 +281,47 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
+	    $this->checkThrottle();
+
         if (!empty($this->sequenceToken)) {
             $data['sequenceToken'] = $this->sequenceToken;
+        } else {
+        	// may have been cleared from previous exception
+        	$this->setSequenceToken();
         }
 
-        $this->checkThrottle();
-
-        $response = $this->client->putLogEvents($data);
-
-        $this->sequenceToken = $response->get('nextSequenceToken');
+	    try
+	    {
+		    $response            = $this->client->putLogEvents($data);
+		    $this->sequenceToken = $response->get('nextSequenceToken');
+	    }
+	    catch (CloudWatchLogsException $e)
+	    {
+		    if (in_array($e->getAwsErrorCode(), ['InvalidSequenceTokenException', 'DataAlreadyAcceptedException'], true))
+		    {
+			    $tokenAttempt++;
+			    // try to get token again if attempt count is less than allowed retries
+			    if ($this->tokenRetries >= $tokenAttempt)
+			    {
+				    $this->setSequenceToken();
+				    $this->send($entries, $tokenAttempt);
+			    }
+			    else
+			    {
+			    	// if attempts exceeds retries then clear the token so the incorrect token isn't used on the next send()
+				    $this->sequenceToken = null;
+				    // and throw if specified
+				    if ($this->throwOnInvalidToken)
+				    {
+					    throw $e;
+				    }
+			    }
+		    }
+		    else
+		    {
+			    throw $e;
+		    }
+	    }
     }
 
     private function initialize()
@@ -361,6 +411,29 @@ class CloudWatch extends AbstractProcessingHandler
 
         $this->initialized = true;
     }
+
+	/**
+	 * Calls describeLogStreams to get the next uploadSequenceToken
+	 */
+	private function setSequenceToken() {
+		$existingStreams =
+			$this
+				->client
+				->describeLogStreams(
+					[
+						'logGroupName' => $this->group,
+						'logStreamNamePrefix' => $this->stream,
+					]
+				)->get('logStreams');
+
+		// extract existing streams names
+		foreach($existingStreams as $stream) {
+			if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
+				$this->sequenceToken = $stream['uploadSequenceToken'];
+				break;
+			}
+		}
+	}
 
     /**
      * {@inheritdoc}
