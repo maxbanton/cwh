@@ -95,11 +95,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $tokenRetries;
 
 	/**
-	 * @var bool
-	 */
-    private $throwOnInvalidToken;
-
-	/**
 	 * CloudWatchLogs constructor.
 	 *
 	 * @param CloudWatchLogsClient $client
@@ -121,7 +116,6 @@ class CloudWatch extends AbstractProcessingHandler
 	 * @param int                  $level
 	 * @param bool                 $bubble
 	 * @param int                  $tokenRetries
-	 * @param bool                 $throwOnInvalidToken
 	 */
     public function __construct(
         CloudWatchLogsClient $client,
@@ -132,8 +126,7 @@ class CloudWatch extends AbstractProcessingHandler
         array $tags = [],
         $level = Logger::DEBUG,
         $bubble = true,
-		$tokenRetries = 0,
-		$throwOnInvalidToken = true
+		$tokenRetries = 0
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -146,7 +139,6 @@ class CloudWatch extends AbstractProcessingHandler
         $this->batchSize = $batchSize;
         $this->tags = $tags;
         $this->tokenRetries = $tokenRetries;
-        $this->throwOnInvalidToken = $throwOnInvalidToken;
 
         parent::__construct($level, $bubble);
 
@@ -310,11 +302,7 @@ class CloudWatch extends AbstractProcessingHandler
 			    {
 			    	// if attempts exceeds retries then clear the token so the incorrect token isn't used on the next send()
 				    $this->sequenceToken = null;
-				    // and throw if specified
-				    if ($this->throwOnInvalidToken)
-				    {
-					    throw $e;
-				    }
+				    throw $e;
 			    }
 		    }
 		    else
