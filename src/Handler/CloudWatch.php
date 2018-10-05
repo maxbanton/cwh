@@ -167,10 +167,17 @@ class CloudWatch extends AbstractProcessingHandler
     private function flushBuffer()
     {
         if (!empty($this->buffer)) {
-            // send items
-            $this->send($this->buffer);
+            // send items, retry once with a fresh sequence token
+            try {
+                $this->send($this->buffer);
+            } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
+                $this->refreshSequenceToken();
+                $this->send($this->buffer);
+            }
+
             // clear buffer
             $this->buffer = [];
+
             // clear data amount
             $this->currentDataAmount = 0;
         }
@@ -240,6 +247,8 @@ class CloudWatch extends AbstractProcessingHandler
      *  - A batch of log events in a single request cannot span more than 24 hours. Otherwise, the operation fails.
      *
      * @param array $entries
+     *
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an invalid sequence token
      */
     private function send(array $entries)
     {
@@ -305,6 +314,13 @@ class CloudWatch extends AbstractProcessingHandler
             }
         }
 
+        $this->refreshSequenceToken();
+
+        $this->initialized = true;
+    }
+
+    private function refreshSequenceToken()
+    {
         // fetch existing streams
         $existingStreams =
             $this
