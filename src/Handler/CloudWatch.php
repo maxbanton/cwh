@@ -248,7 +248,8 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @param array $entries
      *
-     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an invalid sequence token
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
+     *                                                               invalid sequence token
      */
     private function send(array $entries)
     {
