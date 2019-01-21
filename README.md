@@ -104,7 +104,7 @@ $log->error('Baz');
  - [Silex](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
  - [Symfony](http://symfony.com/doc/current/logging.html) ([Example](https://github.com/maxbanton/cwh/issues/10#issuecomment-296173601))
  - [Lumen](https://lumen.laravel.com/docs/5.2/errors)
- - [Laravel](https://laravel.com/docs/5.4/errors)
+ - [Laravel](https://laravel.com/docs/5.4/errors) ([Example](https://stackoverflow.com/a/51790656/1856778))
   
  [And many others](https://github.com/Seldaek/monolog#framework-integrations)
  
