@@ -62,6 +62,7 @@ $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 1000
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Logger;
+use Monolog\Formatter\JsonFormatter;
 
 $sdkParams = [
     'region' => 'eu-west-1',
@@ -87,6 +88,9 @@ $retentionDays = 30;
 
 // Instantiate handler (tags are optional)
 $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
+
+// Optionally set the JsonFormatter to be able to access your log messages in a structured way
+$handler->setFormatter(new JsonFormatter());
 
 // Create a log channel
 $log = new Logger('name');
