@@ -168,6 +168,10 @@ class CloudWatch extends AbstractProcessingHandler
     private function flushBuffer()
     {
         if (!empty($this->buffer)) {
+            if (false === $this->initialized) {
+                $this->initialize();
+            }
+
             // send items, retry once with a fresh sequence token
             try {
                 $this->send($this->buffer);
@@ -254,10 +258,6 @@ class CloudWatch extends AbstractProcessingHandler
      */
     private function send(array $entries)
     {
-        if (false === $this->initialized) {
-            $this->initialize();
-        }
-
         $data = [
             'logGroupName' => $this->group,
             'logStreamName' => $this->stream,
@@ -317,8 +317,6 @@ class CloudWatch extends AbstractProcessingHandler
         }
 
         $this->refreshSequenceToken();
-
-        $this->initialized = true;
     }
 
     private function refreshSequenceToken()

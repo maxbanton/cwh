@@ -4,6 +4,7 @@ namespace Maxbanton\Cwh\Test\Handler;
 
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Aws\CloudWatchLogs\Exception\CloudWatchLogsException;
 use Aws\Result;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
@@ -299,6 +300,32 @@ class CloudWatchTest extends TestCase
         $expected = new LineFormatter("%level_name%: %message% %context% %extra%\n");
 
         $this->assertEquals($expected, $formatter);
+    }
+
+    public function testExceptionFromDescribeLogGroups()
+    {
+        // e.g. 'User is not authorized to perform logs:DescribeLogGroups'
+        $awsException = $this->getMockBuilder(CloudWatchLogsException::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        // if this fails ...
+        $this
+            ->clientMock
+            ->expects($this->atLeastOnce())
+            ->method('describeLogGroups')
+            ->will($this->throwException($awsException));
+
+        // ... this should not be called:
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('describeLogStreams');
+
+        $this->expectException(CloudWatchLogsException::class);
+
+        $handler = $this->getCUT(0);
+        $handler->handle($this->getRecord(Logger::INFO));
     }
 
     private function prepareMocks()
