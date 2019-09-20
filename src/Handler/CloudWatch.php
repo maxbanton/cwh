@@ -258,6 +258,17 @@ class CloudWatch extends AbstractProcessingHandler
      */
     private function send(array $entries)
     {
+        // AWS expects to receive entries in chronological order...
+        usort($entries, static function (array $a, array $b) {
+            if ($a['timestamp'] < $b['timestamp']) {
+                return -1;
+            } elseif ($a['timestamp'] > $b['timestamp']) {
+                return 1;
+            }
+
+            return 0;
+        });
+
         $data = [
             'logGroupName' => $this->group,
             'logStreamName' => $this->stream,
