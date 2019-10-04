@@ -297,7 +297,7 @@ class CloudWatchTest extends TestCase
 
         $formatter = $handler->getFormatter();
 
-        $expected = new LineFormatter("%level_name%: %message% %context% %extra%\n");
+        $expected = new LineFormatter("%channel%: %level_name%: %message% %context% %extra%",null,false,true);
 
         $this->assertEquals($expected, $formatter);
     }
