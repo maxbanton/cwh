@@ -366,7 +366,7 @@ class CloudWatch extends AbstractProcessingHandler
      */
     protected function getDefaultFormatter()
     {
-        return new LineFormatter("%channel%: %level_name%: %message% %context% %extra%",null,false,true);
+        return new LineFormatter("%channel%: %level_name%: %message% %context% %extra%", null, false, true);
     }
 
     /**
