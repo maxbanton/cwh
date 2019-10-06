@@ -366,6 +366,43 @@ class CloudWatchTest extends TestCase
                 ->getMock();
     }
 
+    public function testSortsEntriesChronologically()
+    {
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('PutLogEvents')
+            ->willReturnCallback(function (array $data) {
+                $this->assertContains('record1', $data['logEvents'][0]['message']);
+                $this->assertContains('record2', $data['logEvents'][1]['message']);
+                $this->assertContains('record3', $data['logEvents'][2]['message']);
+                $this->assertContains('record4', $data['logEvents'][3]['message']);
+
+                return $this->awsResultMock;
+            });
+
+        $handler = $this->getCUT(4);
+
+        // created with chronological timestamps:
+        $records = [];
+
+        for ($i = 1; $i <= 4; ++$i) {
+            $record = $this->getRecord(Logger::INFO, 'record' . $i);
+            $record['datetime'] = \DateTime::createFromFormat('U', time() + $i);
+            $records[] = $record;
+        }
+
+        // but submitted in a different order:
+        $handler->handle($records[2]);
+        $handler->handle($records[0]);
+        $handler->handle($records[3]);
+        $handler->handle($records[1]);
+
+        $handler->close();
+    }
+
     private function getCUT($batchSize = 1000)
     {
         return new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, $batchSize);
