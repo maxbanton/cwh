@@ -20,9 +20,9 @@
         "source": "https://github.com/maxbanton/cwh"
     },
     "require": {
-        "php": ">=5.6.0",
+        "php": ">=7.2",
         "aws/aws-sdk-php": "^3.18",
-        "monolog/monolog": "^1.20|^2.0"
+        "monolog/monolog": "^2.0"
     },
     "require-dev": {
         "maxbanton/dd": "^1.0",
