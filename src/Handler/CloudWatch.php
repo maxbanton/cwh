@@ -67,6 +67,11 @@ class CloudWatch extends AbstractProcessingHandler
     private $tags = [];
 
     /**
+     * @var bool
+     */
+    private $createGroup = true;
+
+    /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
      *
      * @var int
@@ -133,6 +138,11 @@ class CloudWatch extends AbstractProcessingHandler
         parent::__construct($level, $bubble);
 
         $this->savedTime = new \DateTime;
+    }
+
+    public function disableCreateGroup()
+    {
+        $this->createGroup = false;
     }
 
     /**
@@ -286,7 +296,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
-    private function initialize()
+    private function initializeGroup()
     {
         // fetch existing groups
         $existingGroups =
@@ -325,6 +335,13 @@ class CloudWatch extends AbstractProcessingHandler
                         ]
                     );
             }
+        }
+    }
+
+    private function initialize()
+    {
+        if ($this->createGroup) {
+            $this->initializeGroup();
         }
 
         $this->refreshSequenceToken();

@@ -53,6 +53,46 @@ class CloudWatchTest extends TestCase
                 ->getMock();
     }
 
+    public function testInitializeWithCreateGroupDisabled()
+    {
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('describeLogGroups');
+
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('createLogGroup');
+
+        $logStreamResult = new Result([
+            'logStreams' => [
+                [
+                    'logStreamName' => $this->streamName,
+                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
+                ]
+            ]
+        ]);
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('describeLogStreams')
+            ->with([
+                'logGroupName' => $this->groupName,
+                'logStreamNamePrefix' => $this->streamName,
+            ])
+            ->willReturn($logStreamResult);
+
+        $handler = $this->getCUT();
+        $handler->disableCreateGroup();
+
+        $reflection = new \ReflectionClass($handler);
+        $reflectionMethod = $reflection->getMethod('initialize');
+        $reflectionMethod->setAccessible(true);
+        $reflectionMethod->invoke($handler);
+    }
+
     public function testInitializeWithExistingLogGroup()
     {
         $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName]]]);

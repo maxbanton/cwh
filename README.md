@@ -89,6 +89,9 @@ $retentionDays = 30;
 // Instantiate handler (tags are optional)
 $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
 
+// Optionally disable creating the log group, if it has been created manually
+$handler->disableCreateGroup();
+
 // Optionally set the JsonFormatter to be able to access your log messages in a structured way
 $handler->setFormatter(new JsonFormatter());
 
@@ -154,6 +157,8 @@ if you prefer to use a separate programmatic IAM user (recommended) or want to d
     ]
 }
 ```
+
+When using the `disableCreateGroup` option, permissions `logs:DescribeLogGroups` and `logs:CreateLogGroup` can be omitted
 
 ## Issues
 Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
