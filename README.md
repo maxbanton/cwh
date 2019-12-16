@@ -121,6 +121,8 @@ if you prefer to use a separate programmatic IAM user (recommended) or want to d
 1. `DescribeLogStreams` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html)
 1. `DescribeLogGroups` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html)
 
+When setting the `$createGroup` argument to `false`, permissions `DescribeLogGroups` and `CreateLogGroup` can be omitted
+
 ## AWS IAM Policy full json example
 ```json
 {
@@ -154,8 +156,6 @@ if you prefer to use a separate programmatic IAM user (recommended) or want to d
     ]
 }
 ```
-
-When setting the `$createGroup` argument to `false`, permissions `logs:DescribeLogGroups` and `logs:CreateLogGroup` can be omitted
 
 ## Issues
 Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
