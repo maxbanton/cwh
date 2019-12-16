@@ -84,8 +84,7 @@ class CloudWatchTest extends TestCase
             ])
             ->willReturn($logStreamResult);
 
-        $handler = $this->getCUT();
-        $handler->disableCreateGroup();
+        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, 10000, [], Logger::DEBUG, true, false);
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');

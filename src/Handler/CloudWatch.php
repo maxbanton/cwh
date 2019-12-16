@@ -69,7 +69,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * @var bool
      */
-    private $createGroup = true;
+    private $createGroup;
 
     /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
@@ -113,6 +113,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param array $tags
      * @param int $level
      * @param bool $bubble
+     * @param bool $createGroup
      */
     public function __construct(
         CloudWatchLogsClient $client,
@@ -122,7 +123,8 @@ class CloudWatch extends AbstractProcessingHandler
         $batchSize = 10000,
         array $tags = [],
         $level = Logger::DEBUG,
-        $bubble = true
+        $bubble = true,
+        $createGroup = true
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -134,15 +136,11 @@ class CloudWatch extends AbstractProcessingHandler
         $this->retention = $retention;
         $this->batchSize = $batchSize;
         $this->tags = $tags;
+        $this->createGroup = $createGroup;
 
         parent::__construct($level, $bubble);
 
         $this->savedTime = new \DateTime;
-    }
-
-    public function disableCreateGroup()
-    {
-        $this->createGroup = false;
     }
 
     /**
