@@ -1,7 +1,6 @@
 * **I'm submitting a ...**
   - [ ] bug report
   - [ ] feature request
-  - [ ] support request
 
 * **Do you want to request a *feature* or report a *bug*?**
 
@@ -17,6 +16,9 @@
   
   - PHP Version:
   - Operating system (distro):
-  - Application mode (web app / cli app / daemon cli app):
+  - Application mode:
+    - [ ] Web app
+    - [ ] CLI app
+    - [ ] Daemon worker
 
 * **Other information** (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links to have context, eg. stackoverflow, etc)
