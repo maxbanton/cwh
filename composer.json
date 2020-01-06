@@ -6,7 +6,6 @@
     "keywords": [
         "aws",
         "cloudwatch",
-        "php",
         "monolog"
     ],
     "license": "MIT",
