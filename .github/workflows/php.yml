@@ -6,15 +6,34 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['5.6', '7.0', '7.1', '7.2', '7.3', '7.4']
+      name: PHP ${{ matrix.php-versions }}
 
     steps:
-      - uses: shivammathur/setup-php@v1
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v1
         with:
-          php-version: '7.2'
+          php-version: ${{ matrix.php-versions }}
           tools: composer, phpunit, phpcbf, phpcs
 
       - name: Validate composer.json
         run: composer validate
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
