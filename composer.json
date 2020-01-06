@@ -27,7 +27,9 @@
         "monolog/monolog": "^2.0"
     },
     "require-dev": {
-        "maxbanton/dd": "^2.0"
+        "maxbanton/dd": "^2.0",
+        "phpunit/phpunit": "^8.5",
+        "squizlabs/php_codesniffer": "^3.5"
     },
     "config": {
         "preferred-install": "dist"

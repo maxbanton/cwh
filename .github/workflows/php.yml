@@ -17,7 +17,7 @@ jobs:
         uses: shivammathur/setup-php@v1
         with:
           php-version: ${{ matrix.php-versions }}
-          tools: composer, phpunit, phpcbf, phpcs
+          tools: composer
 
       - name: Validate composer.json
         run: composer validate
@@ -37,4 +37,9 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-suggest
 
       - name: Run tests
-        run: phpunit
+        run: vendor/bin/phpunit
+
+      - name: Check syntax
+        run:
+          - php -l src/
+          - vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
