@@ -40,6 +40,6 @@ jobs:
         run: vendor/bin/phpunit
 
       - name: Check syntax
-        run:
-          - php -l src/
-          - vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
+        run: |
+          php -l src/
+          vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
