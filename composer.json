@@ -22,8 +22,8 @@
     },
     "require": {
         "php": "^7.2",
-        "aws/aws-sdk-php": "^3.18",
-        "monolog/monolog": "^2.0"
+        "monolog/monolog": "^2.0",
+        "aws/aws-sdk-php": "^3.18"
     },
     "require-dev": {
         "maxbanton/dd": "^2.0",
