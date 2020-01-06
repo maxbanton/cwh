@@ -1,13 +1,13 @@
-name: PHP Composer
+name: Pipeline
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   run:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['5.6', '7.0', '7.1', '7.2', '7.3', '7.4']
+        php-versions: ['7.2', '7.3', '7.4']
     name: PHP ${{ matrix.php-versions }}
     steps:
       - name: Checkout
@@ -17,12 +17,13 @@ jobs:
         uses: shivammathur/setup-php@v1
         with:
           php-version: ${{ matrix.php-versions }}
-          tools: composer, phpunit, phpcbf, phpcs
+          extensions: mbstring
+          coverage: pcov
 
       - name: Validate composer.json
         run: composer validate
 
-      - name: Get Composer Cache Directory
+      - name: Get Composer cache directory
         id: composer-cache
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
@@ -30,11 +31,22 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress --no-suggest -o
+
+      - name: Check syntax
+        run: |
+          php -l src/
+          vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
 
       - name: Run tests
-        run: phpunit
+        run: vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+
+      - name: Send to coveralls
+        run: php vendor/bin/php-coveralls -v
+        env:
+          COVERALLS_RUN_LOCALLY: 1
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}

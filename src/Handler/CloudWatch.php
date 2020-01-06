@@ -3,6 +3,7 @@
 namespace Maxbanton\Cwh\Handler;
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
@@ -114,6 +115,8 @@ class CloudWatch extends AbstractProcessingHandler
      * @param int $level
      * @param bool $bubble
      * @param bool $createGroup
+     *
+     * @throws \Exception
      */
     public function __construct(
         CloudWatchLogsClient $client,
@@ -146,7 +149,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record)
+    protected function write(array $record): void
     {
         $records = $this->formatRecords($record);
 
@@ -166,14 +169,14 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * @param array $record
      */
-    private function addToBuffer(array $record)
+    private function addToBuffer(array $record): void
     {
         $this->currentDataAmount += $this->getMessageSize($record);
 
         $this->buffer[] = $record;
     }
 
-    private function flushBuffer()
+    private function flushBuffer(): void
     {
         if (!empty($this->buffer)) {
             if (false === $this->initialized) {
@@ -196,7 +199,7 @@ class CloudWatch extends AbstractProcessingHandler
         }
     }
 
-    private function checkThrottle()
+    private function checkThrottle(): void
     {
         $current = new \DateTime();
         $diff = $current->diff($this->savedTime)->s;
@@ -220,7 +223,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param array $record
      * @return int
      */
-    private function getMessageSize($record)
+    private function getMessageSize($record): int
     {
         return strlen($record['message']) + 26;
     }
@@ -232,7 +235,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param array $entry
      * @return array
      */
-    private function formatRecords(array $entry)
+    private function formatRecords(array $entry): array
     {
         $entries = str_split($entry['formatted'], self::EVENT_SIZE_LIMIT);
         $timestamp = $entry['datetime']->format('U.u') * 1000;
@@ -264,7 +267,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
      *                                                               invalid sequence token
      */
-    private function send(array $entries)
+    private function send(array $entries): void
     {
         // AWS expects to receive entries in chronological order...
         usort($entries, static function (array $a, array $b) {
@@ -294,7 +297,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
-    private function initializeGroup()
+    private function initializeGroup(): void
     {
         // fetch existing groups
         $existingGroups =
@@ -336,7 +339,7 @@ class CloudWatch extends AbstractProcessingHandler
         }
     }
 
-    private function initialize()
+    private function initialize(): void
     {
         if ($this->createGroup) {
             $this->initializeGroup();
@@ -345,7 +348,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->refreshSequenceToken();
     }
 
-    private function refreshSequenceToken()
+    private function refreshSequenceToken(): void
     {
         // fetch existing streams
         $existingStreams =
@@ -390,7 +393,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      */
-    protected function getDefaultFormatter()
+    protected function getDefaultFormatter(): FormatterInterface
     {
         return new LineFormatter("%channel%: %level_name%: %message% %context% %extra%", null, false, true);
     }
@@ -398,7 +401,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      */
-    public function close()
+    public function close(): void
     {
         $this->flushBuffer();
     }

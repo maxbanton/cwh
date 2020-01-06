@@ -10,17 +10,18 @@ use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class CloudWatchTest extends TestCase
 {
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject | CloudWatchLogsClient
+     * @var MockObject | CloudWatchLogsClient
      */
     private $clientMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject | Result
+     * @var MockObject | Result
      */
     private $awsResultMock;
 
@@ -34,7 +35,7 @@ class CloudWatchTest extends TestCase
      */
     private $streamName = 'stream';
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->clientMock =
             $this
@@ -414,10 +415,10 @@ class CloudWatchTest extends TestCase
             ->expects($this->once())
             ->method('PutLogEvents')
             ->willReturnCallback(function (array $data) {
-                $this->assertContains('record1', $data['logEvents'][0]['message']);
-                $this->assertContains('record2', $data['logEvents'][1]['message']);
-                $this->assertContains('record3', $data['logEvents'][2]['message']);
-                $this->assertContains('record4', $data['logEvents'][3]['message']);
+                $this->assertStringContainsString('record1', $data['logEvents'][0]['message']);
+                $this->assertStringContainsString('record2', $data['logEvents'][1]['message']);
+                $this->assertStringContainsString('record3', $data['logEvents'][2]['message']);
+                $this->assertStringContainsString('record4', $data['logEvents'][3]['message']);
 
                 return $this->awsResultMock;
             });

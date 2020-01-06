@@ -1,10 +1,4 @@
 /.idea/
 /vendor/
-/composer.phar
-/nbproject/
-/puphpet/
-/Vagrantfile
-/.vagrant/
-/html/
-/coverage/
-/example/
+/.phpunit.result.cache
+/composer.lock
