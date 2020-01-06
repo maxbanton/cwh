@@ -1,6 +1,6 @@
-name: PHP Composer
+name: Pipeline
 
-on: ["pull_request"]
+on: [push, pull_request]
 
 jobs:
   run:
@@ -23,7 +23,7 @@ jobs:
       - name: Validate composer.json
         run: composer validate
 
-      - name: Get Composer Cache Directory
+      - name: Get Composer cache directory
         id: composer-cache
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
