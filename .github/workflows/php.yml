@@ -1,6 +1,6 @@
 name: PHP Composer
 
-on: [push]
+on: ["push", "pull_request"]
 
 jobs:
   run:
@@ -19,6 +19,7 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring
           tools: composer
+          coverage: pcov
 
       - name: Validate composer.json
         run: composer validate
@@ -31,16 +32,21 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Run tests
-        run: vendor/bin/phpunit
-
       - name: Check syntax
         run: |
           php -l src/
           vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
+
+      - name: Run tests
+        run: vendor/bin/phpunit
+
+      - name: Coveralls
+          uses: coverallsapp/github-action@master
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
