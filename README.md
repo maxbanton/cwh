@@ -11,48 +11,23 @@ Handler for PHP logging library [Monolog](https://github.com/Seldaek/monolog) fo
 
 Before using this library, it's recommended to get acquainted with the [pricing](https://aws.amazon.com/en/cloudwatch/pricing/) for AWS CloudWatch services.
 
-Please press **&#9733; Star** button if you find this library useful, aslo you can [donate](#donate) if you like to.
+Please press **&#9733; Star** button if you find this library useful.
+
+## Requirements
+* PHP ^7.2
+* AWS account with proper permissions (see [list of permissions below](#AWS IAM needed permissions))
 
 ## Features
 * Up to 10000 batch logs sending in order to avoid _Rate exceeded_ errors 
 * Log Groups creating with tags
 * AWS CloudWatch Logs staff lazy loading
 * Suitable for web applications and for long-living CLI daemons and workers
-* Compatible with PHP >= 5.6
 
 ## Installation
 Install the latest version with [Composer](https://getcomposer.org/) by running
 
 ```bash
-$ composer require maxbanton/cwh:^1.0
-```
-
-## Upgrade
-Upgrade to the lastest version with [Composer](https://getcomposer.org/) by running
-
-```
-$ composer require maxbanton/cwh:^1.0 --update-with-dependencies
-```
-
-and change your code from
-
-```php
-<?php
-
-use Maxbanton\Cwh\Handler\CloudWatch;
-
-// Instantiate handler
-$handler = new CloudWatch($client, $logGroupName, $logStreamName, $daysToRetention);
-```
-to
-
-```php
-<?php
-
-use Maxbanton\Cwh\Handler\CloudWatch;
-
-// Instantiate handler (tags are optional)
-$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
+$ composer require maxbanton/cwh:^2.0
 ```
 
 ## Basic Usage
@@ -162,12 +137,3 @@ Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
 
 ## Contributing
 Please check [this document](https://github.com/maxbanton/cwh/blob/master/CONTRIBUTING.md)
-
-## Donate
-If you would like to, you can send any amount of BTC to the wallet `12d3VXfvPiQ5bFMfPppGqpwnNSkZwigBVt`
-
-![Donate BTC](https://monosnap.com/file/uv8lk8VrWzEywdUCmkfy4NCRg9qok3.png)
-
-or ETHER to the wallet `0xd6C9d9Af4b03a11223C67067782E30194D9adAEb`
-
-![Donate ETHER](https://monosnap.com/image/4nsT44MoNd7Y4OkC9rJWmy1yyvCh8r.png)
