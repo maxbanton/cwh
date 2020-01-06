@@ -443,11 +443,6 @@ class CloudWatchTest extends TestCase
         $handler->close();
     }
 
-    public function testFailed()
-    {
-        $this->assertTrue(false);
-    }
-
     private function getCUT($batchSize = 1000)
     {
         return new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, $batchSize);
