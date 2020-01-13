@@ -1,6 +1,6 @@
 # AWS CloudWatch Logs Handler for Monolog
 
-[![Build Status](https://img.shields.io/travis/maxbanton/cwh/master.svg)](https://travis-ci.org/maxbanton/cwh)
+[![Actions Status](https://github.com/maxbanton/cwh/workflows/Pipeline/badge.svg)](https://github.com/maxbanton/cwh/actions)
 [![Coverage Status](https://img.shields.io/coveralls/maxbanton/cwh/master.svg)](https://coveralls.io/github/maxbanton/cwh?branch=master)
 [![License](https://img.shields.io/packagist/l/maxbanton/cwh.svg)](https://github.com/maxbanton/cwh/blob/master/LICENSE)
 [![Version](https://img.shields.io/packagist/v/maxbanton/cwh.svg)](https://packagist.org/packages/maxbanton/cwh)
