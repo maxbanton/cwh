@@ -31,6 +31,9 @@
         "squizlabs/php_codesniffer": "^3.5",
         "php-coveralls/php-coveralls": "^2.2"
     },
+    "suggest": {
+        "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
+    },
     "config": {
         "preferred-install": "dist"
     },
@@ -39,8 +42,5 @@
             "Maxbanton\\Cwh\\": "src"
         }
     },
-    "minimum-stability": "stable",
-    "suggest": {
-        "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
-    }
+    "minimum-stability": "stable"
 }
