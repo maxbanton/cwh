@@ -39,5 +39,8 @@
             "Maxbanton\\Cwh\\": "src"
         }
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "suggest": {
+        "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
+    }
 }
