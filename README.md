@@ -137,3 +137,7 @@ Feel free to [report any issues](https://github.com/maxbanton/cwh/issues/new)
 
 ## Contributing
 Please check [this document](https://github.com/maxbanton/cwh/blob/master/CONTRIBUTING.md)
+
+___
+
+Made in Ukraine 🇺🇦
