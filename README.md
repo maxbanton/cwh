@@ -105,13 +105,15 @@ When setting the `$createGroup` argument to `false`, permissions `DescribeLogGro
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": "logs:CreateLogGroup",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups"
+            ],
             "Resource": "*"
         },
         {
             "Effect": "Allow",
             "Action": [
-                "logs:DescribeLogGroups",
                 "logs:CreateLogStream",
                 "logs:DescribeLogStreams",
                 "logs:PutRetentionPolicy"
