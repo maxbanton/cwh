@@ -405,4 +405,12 @@ class CloudWatch extends AbstractProcessingHandler
     {
         $this->flushBuffer();
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->flushBuffer();
+    }
 }
