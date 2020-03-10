@@ -187,8 +187,12 @@ class CloudWatch extends AbstractProcessingHandler
             try {
                 $this->send($this->buffer);
             } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-                $this->refreshSequenceToken();
-                $this->send($this->buffer);
+                if ($e->getAwsErrorCode() == 'InvalidSequenceTokenException') {
+                    $parts = explode(':', $e->getAwsErrorMessage());
+                    $token = trim(array_pop($parts));
+                    $this->sequenceToken = $token;
+                    $this->send($this->buffer);
+                }
             }
 
             // clear buffer
