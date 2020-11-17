@@ -18,7 +18,7 @@ This library uses AWS API through AWS PHP SDK, which has limits on concurrent re
 
 ## Requirements
 * PHP ^7.2
-* AWS account with proper permissions (see [list of permissions below](#AWS IAM needed permissions))
+* AWS account with proper permissions (see list of permissions below)
 
 ## Features
 * Up to 10000 batch logs sending in order to avoid _Rate exceeded_ errors 
