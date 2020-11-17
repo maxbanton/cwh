@@ -28,8 +28,7 @@
     "require-dev": {
         "maxbanton/dd": "^2.0",
         "phpunit/phpunit": "^8.5|^9.4",
-        "squizlabs/php_codesniffer": "^3.5",
-        "php-coveralls/php-coveralls": "^2.2"
+        "squizlabs/php_codesniffer": "^3.5"
     },
     "suggest": {
         "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
