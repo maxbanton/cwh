@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.2', '7.3', '7.4']
+        php-versions: ['7.2', '7.3', '7.4', '8.0']
     name: PHP ${{ matrix.php-versions }}
     steps:
       - name: Checkout
@@ -45,17 +45,11 @@ jobs:
       - name: Run tests
         run: vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
-      #- name: Send to coveralls
-      #  run: php vendor/bin/php-coveralls -v
-      #  env:
-      #    COVERALLS_RUN_LOCALLY: 1
-      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload coverage results to Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          composer global require php-coveralls/php-coveralls
+          composer require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=build/logs/clover.xml -v
           
       
