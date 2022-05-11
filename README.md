@@ -1,3 +1,5 @@
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine)
+
 # AWS CloudWatch Logs Handler for Monolog
 
 [![Actions Status](https://github.com/maxbanton/cwh/workflows/Pipeline/badge.svg)](https://github.com/maxbanton/cwh/actions)
