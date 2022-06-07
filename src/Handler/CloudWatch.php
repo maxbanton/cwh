@@ -38,7 +38,7 @@ class CloudWatch extends AbstractProcessingHandler
     private $stream;
 
     /**
-     * @var integer
+     * @var int|null
      */
     private $retention;
 
@@ -109,7 +109,7 @@ class CloudWatch extends AbstractProcessingHandler
      *  The ':' (colon) and '*' (asterisk) characters are not allowed.
      * @param string $stream
      *
-     * @param int $retention
+     * @param int|null $retention
      * @param int $batchSize
      * @param array $tags
      * @param int $level
