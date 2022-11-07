@@ -40,7 +40,7 @@ class CloudWatchTest extends TestCase
         $this->clientMock =
             $this
                 ->getMockBuilder(CloudWatchLogsClient::class)
-                ->setMethods(
+                ->addMethods(
                     [
                         'describeLogGroups',
                         'CreateLogGroup',
@@ -345,6 +345,7 @@ class CloudWatchTest extends TestCase
     public function testExceptionFromDescribeLogGroups()
     {
         // e.g. 'User is not authorized to perform logs:DescribeLogGroups'
+        /** @var CloudWatchLogsException */
         $awsException = $this->getMockBuilder(CloudWatchLogsException::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -401,7 +402,7 @@ class CloudWatchTest extends TestCase
         $this->awsResultMock =
             $this
                 ->getMockBuilder(Result::class)
-                ->setMethods(['get'])
+                ->onlyMethods(['get'])
                 ->disableOriginalConstructor()
                 ->getMock();
     }
@@ -439,6 +440,54 @@ class CloudWatchTest extends TestCase
         $handler->handle($records[0]);
         $handler->handle($records[3]);
         $handler->handle($records[1]);
+
+        $handler->close();
+    }
+
+    public function testSendsBatchesSpanning24HoursOrLess()
+    {
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+                ->expects($this->exactly(3))
+                ->method('PutLogEvents')
+                ->willReturnCallback(function (array $data) {
+                    /** @var int|null */
+                    $earliestTime = null;
+
+                    /** @var int|null */
+                    $latestTime = null;
+
+                    foreach ($data['logEvents'] as $logEvent) {
+                        $logTimestamp = $logEvent['timestamp'];
+
+                        if (!$earliestTime || $logTimestamp < $earliestTime) {
+                            $earliestTime = $logTimestamp;
+                        }
+
+                        if (!$latestTime || $logTimestamp > $latestTime) {
+                            $latestTime = $logTimestamp;
+                        }
+                    }
+
+                    $this->assertNotNull($earliestTime);
+                    $this->assertNotNull($latestTime);
+                    $this->assertGreaterThanOrEqual($earliestTime, $latestTime);
+                    $this->assertLessThanOrEqual(24 * 60 * 60 * 1000, $latestTime - $earliestTime);
+
+                    return $this->awsResultMock;
+                });
+
+        $handler = $this->getCUT();
+
+        // write 15 log entries spanning 3 days
+        for ($i = 1; $i <= 15; ++$i) {
+            $record = $this->getRecord(Logger::INFO, 'record' . $i);
+            $record['datetime'] = \DateTime::createFromFormat('U', time() + $i * 5 * 60 * 60);
+
+            $handler->handle($record);
+        }
 
         $handler->close();
     }

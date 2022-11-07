@@ -23,6 +23,13 @@ class CloudWatch extends AbstractProcessingHandler
     const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
 
     /**
+     * The batch of log events in a single PutLogEvents request cannot span more than 24 hours.
+     *
+     * @var int
+     */
+    const TIMESPAN_LIMIT = 86400000;
+
+    /**
      * @var CloudWatchLogsClient
      */
     private $client;
@@ -95,6 +102,11 @@ class CloudWatch extends AbstractProcessingHandler
     private $savedTime;
 
     /**
+     * @var int|null
+     */
+    private $earliestTimestamp = null;
+
+    /**
      * CloudWatchLogs constructor.
      * @param CloudWatchLogsClient $client
      *
@@ -154,7 +166,7 @@ class CloudWatch extends AbstractProcessingHandler
         $records = $this->formatRecords($record);
 
         foreach ($records as $record) {
-            if ($this->currentDataAmount + $this->getMessageSize($record) >= $this->dataAmountLimit) {
+            if ($this->willMessageSizeExceedLimit($record) || $this->willMessageTimestampExceedLimit($record)) {
                 $this->flushBuffer();
             }
 
@@ -172,6 +184,12 @@ class CloudWatch extends AbstractProcessingHandler
     private function addToBuffer(array $record): void
     {
         $this->currentDataAmount += $this->getMessageSize($record);
+
+        $timestamp = $record['timestamp'];
+
+        if (!$this->earliestTimestamp || $timestamp < $this->earliestTimestamp) {
+            $this->earliestTimestamp = $timestamp;
+        }
 
         $this->buffer[] = $record;
     }
@@ -193,6 +211,9 @@ class CloudWatch extends AbstractProcessingHandler
 
             // clear buffer
             $this->buffer = [];
+
+            // clear the earliest timestamp
+            $this->earliestTimestamp = null;
 
             // clear data amount
             $this->currentDataAmount = 0;
@@ -226,6 +247,30 @@ class CloudWatch extends AbstractProcessingHandler
     private function getMessageSize($record): int
     {
         return strlen($record['message']) + 26;
+    }
+
+    /**
+     * Determine whether the specified record's message size in addition to the
+     * size of the current queued messages will exceed AWS CloudWatch's limit.
+     *
+     * @param array $record
+     * @return bool
+     */
+    protected function willMessageSizeExceedLimit(array $record): bool
+    {
+        return $this->currentDataAmount + $this->getMessageSize($record) >= $this->dataAmountLimit;
+    }
+
+    /**
+     * Determine whether the specified record's timestamp exceeds the 24 hour timespan limit
+     * for all batched messages written in a single call to PutLogEvents.
+     *
+     * @param array $record
+     * @return bool
+     */
+    protected function willMessageTimestampExceedLimit(array $record): bool
+    {
+        return $this->earliestTimestamp && $record['timestamp'] - $this->earliestTimestamp > self::TIMESPAN_LIMIT;
     }
 
     /**
