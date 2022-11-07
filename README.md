@@ -19,7 +19,7 @@ Please press **&#9733; Star** button if you find this library useful.
 This library uses AWS API through AWS PHP SDK, which has limits on concurrent requests. It means that on high concurrent or high load applications it may not work on it's best way. Please consider using another solution such as logging to the stdout and redirecting logs with fluentd.
 
 ## Requirements
-* PHP ^7.3
+* PHP >=8.1
 * AWS account with proper permissions (see list of permissions below)
 
 ## Features
