@@ -7,139 +7,70 @@ use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
+use Monolog\LogRecord;
+use Monolog\Level;
 
 class CloudWatch extends AbstractProcessingHandler
 {
     /**
      * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
      */
-    const RPS_LIMIT = 5;
+    public const RPS_LIMIT = 5;
 
     /**
      * Event size limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
-     *
-     * @var int
      */
-    const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
+    public const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
 
     /**
      * The batch of log events in a single PutLogEvents request cannot span more than 24 hours.
-     *
-     * @var int
      */
-    const TIMESPAN_LIMIT = 86400000;
+    public const TIMESPAN_LIMIT = 86400000;
 
-    /**
-     * @var CloudWatchLogsClient
-     */
-    private $client;
-
-    /**
-     * @var string
-     */
-    private $group;
-
-    /**
-     * @var string
-     */
-    private $stream;
-
-    /**
-     * @var integer
-     */
-    private $retention;
-
-    /**
-     * @var bool
-     */
-    private $initialized = false;
-
-    /**
-     * @var string
-     */
-    private $sequenceToken;
-
-    /**
-     * @var int
-     */
-    private $batchSize;
-
-    /**
-     * @var array
-     */
-    private $buffer = [];
-
-    /**
-     * @var array
-     */
-    private $tags = [];
-
-    /**
-     * @var bool
-     */
-    private $createGroup;
+    private CloudWatchLogsClient $client;
+    private string $group;
+    private string $stream;
+    private int $retention;
+    private bool $initialized = false;
+    private string $sequenceToken;
+    private int $batchSize;
+    /** @var LogRecord[] $buffer */
+    private array $buffer = [];
+    private array $tags = [];
+    private bool $createGroup;
 
     /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
-     *
-     * @var int
      */
-    private $dataAmountLimit = 1048576;
-
-    /**
-     * @var int
-     */
-    private $currentDataAmount = 0;
-
-    /**
-     * @var int
-     */
-    private $remainingRequests = self::RPS_LIMIT;
-
-    /**
-     * @var \DateTime
-     */
-    private $savedTime;
-
-    /**
-     * @var int|null
-     */
-    private $earliestTimestamp = null;
+    private int $dataAmountLimit = 1048576;
+    private int $currentDataAmount = 0;
+    private int $remainingRequests = self::RPS_LIMIT;
+    private \DateTime $savedTime;
+    private int|null $earliestTimestamp = null;
 
     /**
      * CloudWatchLogs constructor.
-     * @param CloudWatchLogsClient $client
      *
      *  Log group names must be unique within a region for an AWS account.
      *  Log group names can be between 1 and 512 characters long.
      *  Log group names consist of the following characters: a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen),
      * '/' (forward slash), and '.' (period).
-     * @param string $group
      *
      *  Log stream names must be unique within the log group.
      *  Log stream names can be between 1 and 512 characters long.
      *  The ':' (colon) and '*' (asterisk) characters are not allowed.
-     * @param string $stream
-     *
-     * @param int $retention
-     * @param int $batchSize
-     * @param array $tags
-     * @param int $level
-     * @param bool $bubble
-     * @param bool $createGroup
-     *
      * @throws \Exception
      */
     public function __construct(
         CloudWatchLogsClient $client,
-        $group,
-        $stream,
-        $retention = 14,
-        $batchSize = 10000,
+        string $group,
+        string $stream,
+        int $retention = 14,
+        int $batchSize = 10000,
         array $tags = [],
-        $level = Logger::DEBUG,
-        $bubble = true,
-        $createGroup = true
+        int | string | Level $level = Logger::DEBUG,
+        bool $bubble = true,
+        bool $createGroup = true
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -158,10 +89,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->savedTime = new \DateTime;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
         $records = $this->formatRecords($record);
 
@@ -178,9 +106,6 @@ class CloudWatch extends AbstractProcessingHandler
         }
     }
 
-    /**
-     * @param array $record
-     */
     private function addToBuffer(array $record): void
     {
         $this->currentDataAmount += $this->getMessageSize($record);
@@ -240,11 +165,8 @@ class CloudWatch extends AbstractProcessingHandler
 
     /**
      * http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
-     *
-     * @param array $record
-     * @return int
      */
-    private function getMessageSize($record): int
+    private function getMessageSize(array $record): int
     {
         return strlen($record['message']) + 26;
     }
@@ -252,9 +174,6 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * Determine whether the specified record's message size in addition to the
      * size of the current queued messages will exceed AWS CloudWatch's limit.
-     *
-     * @param array $record
-     * @return bool
      */
     protected function willMessageSizeExceedLimit(array $record): bool
     {
@@ -264,9 +183,6 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * Determine whether the specified record's timestamp exceeds the 24 hour timespan limit
      * for all batched messages written in a single call to PutLogEvents.
-     *
-     * @param array $record
-     * @return bool
      */
     protected function willMessageTimestampExceedLimit(array $record): bool
     {
@@ -276,9 +192,6 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * Event size in the batch can not be bigger than 256 KB
      * https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html
-     *
-     * @param array $entry
-     * @return array
      */
     private function formatRecords(array $entry): array
     {
@@ -307,7 +220,7 @@ class CloudWatch extends AbstractProcessingHandler
      *  - The maximum number of log events in a batch is 10,000.
      *  - A batch of log events in a single request cannot span more than 24 hours. Otherwise, the operation fails.
      *
-     * @param array $entries
+     * @param LogRecord[] $entries
      *
      * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
      *                                                               invalid sequence token
@@ -435,17 +348,11 @@ class CloudWatch extends AbstractProcessingHandler
         $this->initialized = true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getDefaultFormatter(): FormatterInterface
     {
         return new LineFormatter("%channel%: %level_name%: %message% %context% %extra%", null, false, true);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function close(): void
     {
         $this->flushBuffer();
