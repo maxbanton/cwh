@@ -32,7 +32,7 @@ class CloudWatch extends AbstractProcessingHandler
     private string $stream;
     private int $retention;
     private bool $initialized = false;
-    private string|null $sequenceToken;
+    private string | null $sequenceToken;
     private int $batchSize;
     /** @var LogRecord[] $buffer */
     private array $buffer = [];
@@ -46,7 +46,7 @@ class CloudWatch extends AbstractProcessingHandler
     private int $currentDataAmount = 0;
     private int $remainingRequests = self::RPS_LIMIT;
     private \DateTime $savedTime;
-    private int|null $earliestTimestamp = null;
+    private int | null $earliestTimestamp = null;
 
     /**
      * CloudWatchLogs constructor.
@@ -68,7 +68,7 @@ class CloudWatch extends AbstractProcessingHandler
         int $retention = 14,
         int $batchSize = 10000,
         array $tags = [],
-        int | string | Level $level = Logger::DEBUG,
+        int | string | Level $level = Level::Debug,
         bool $bubble = true,
         bool $createGroup = true
     ) {

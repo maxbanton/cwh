@@ -42,6 +42,7 @@ $ composer require maxbanton/cwh:^2.0
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Logger;
+use Monolog\Level;
 use Monolog\Formatter\JsonFormatter;
 
 $sdkParams = [
@@ -67,7 +68,7 @@ $streamName = 'ec2-instance-1';
 $retentionDays = 30;
 
 // Instantiate handler (tags are optional)
-$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
+$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value'], Level::Info);
 
 // Optionally set the JsonFormatter to be able to access your log messages in a structured way
 $handler->setFormatter(new JsonFormatter());
