@@ -44,7 +44,7 @@ jobs:
       
       - name: phpstan
         uses: php-actions/phpstan@v3
-          with:
+        with:
           path: src/
 
       - name: Run tests
