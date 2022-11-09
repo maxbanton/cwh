@@ -86,7 +86,7 @@ class CloudWatch extends AbstractProcessingHandler
 
         parent::__construct($level, $bubble);
 
-        $this->savedTime = new \DateTime;
+        $this->savedTime = new \DateTime();
     }
 
     protected function write(LogRecord $record): void

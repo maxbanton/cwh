@@ -2,7 +2,6 @@
 
 namespace Maxbanton\Cwh\Test\Handler;
 
-
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Aws\CloudWatchLogs\Exception\CloudWatchLogsException;
 use Aws\Result;
@@ -16,7 +15,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 class CloudWatchTest extends TestCase
 {
-
     private MockObject | CloudWatchLogsClient $clientMock;
     private MockObject | Result $awsResultMock;
     private string $groupName = 'group';
@@ -72,7 +70,17 @@ class CloudWatchTest extends TestCase
             ])
             ->willReturn($logStreamResult);
 
-        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, 10000, [], Logger::DEBUG, true, false);
+        $handler = new CloudWatch(
+            $this->clientMock,
+            $this->groupName,
+            $this->streamName,
+            14,
+            10000,
+            [],
+            Logger::DEBUG,
+            true,
+            false
+        );
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');
@@ -488,8 +496,7 @@ class CloudWatchTest extends TestCase
         string $message = 'test',
         $context = [],
         \DateTimeImmutable $dt = new \DateTimeImmutable()
-        ): LogRecord
-    {
+    ): LogRecord {
         return new LogRecord(
             $dt,
             'test',
