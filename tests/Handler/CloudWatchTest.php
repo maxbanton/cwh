@@ -2,38 +2,23 @@
 
 namespace Maxbanton\Cwh\Test\Handler;
 
-
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Aws\CloudWatchLogs\Exception\CloudWatchLogsException;
 use Aws\Result;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
+use Monolog\LogRecord;
+use Monolog\Level;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class CloudWatchTest extends TestCase
 {
-
-    /**
-     * @var MockObject | CloudWatchLogsClient
-     */
-    private $clientMock;
-
-    /**
-     * @var MockObject | Result
-     */
-    private $awsResultMock;
-
-    /**
-     * @var string
-     */
-    private $groupName = 'group';
-
-    /**
-     * @var string
-     */
-    private $streamName = 'stream';
+    private MockObject | CloudWatchLogsClient $clientMock;
+    private MockObject | Result $awsResultMock;
+    private string $groupName = 'group';
+    private string $streamName = 'stream';
 
     protected function setUp(): void
     {
@@ -85,7 +70,17 @@ class CloudWatchTest extends TestCase
             ])
             ->willReturn($logStreamResult);
 
-        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, 10000, [], Logger::DEBUG, true, false);
+        $handler = new CloudWatch(
+            $this->clientMock,
+            $this->groupName,
+            $this->streamName,
+            14,
+            10000,
+            [],
+            Logger::DEBUG,
+            true,
+            false
+        );
 
         $reflection = new \ReflectionClass($handler);
         $reflectionMethod = $reflection->getMethod('initialize');
@@ -307,7 +302,7 @@ class CloudWatchTest extends TestCase
 
         $handler = $this->getCUT(1);
 
-        $handler->handle($this->getRecord(Logger::DEBUG));
+        $handler->handle($this->getRecord(Level::Debug));
 
         $handler->close();
     }
@@ -366,7 +361,7 @@ class CloudWatchTest extends TestCase
         $this->expectException(CloudWatchLogsException::class);
 
         $handler = $this->getCUT(0);
-        $handler->handle($this->getRecord(Logger::INFO));
+        $handler->handle($this->getRecord(Level::Info));
     }
 
     private function prepareMocks()
@@ -430,8 +425,8 @@ class CloudWatchTest extends TestCase
         $records = [];
 
         for ($i = 1; $i <= 4; ++$i) {
-            $record = $this->getRecord(Logger::INFO, 'record' . $i);
-            $record['datetime'] = \DateTime::createFromFormat('U', time() + $i);
+            $dt = \DateTimeImmutable::createFromFormat('U', time() + $i);
+            $record = $this->getRecord(Level::Info, 'record' . $i, [], $dt);
             $records[] = $record;
         }
 
@@ -483,9 +478,8 @@ class CloudWatchTest extends TestCase
 
         // write 15 log entries spanning 3 days
         for ($i = 1; $i <= 15; ++$i) {
-            $record = $this->getRecord(Logger::INFO, 'record' . $i);
-            $record['datetime'] = \DateTime::createFromFormat('U', time() + $i * 5 * 60 * 60);
-
+            $dt = \DateTimeImmutable::createFromFormat('U', time() + $i * 5 * 60 * 60);
+            $record = $this->getRecord(Level::Info, 'record' . $i, [], $dt);
             $handler->handle($record);
         }
 
@@ -497,23 +491,19 @@ class CloudWatchTest extends TestCase
         return new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, $batchSize);
     }
 
-    /**
-     * @param int $level
-     * @param string $message
-     * @param array $context
-     * @return array
-     */
-    private function getRecord($level = Logger::WARNING, $message = 'test', $context = [])
-    {
-        return [
-            'message' => $message,
-            'context' => $context,
-            'level' => $level,
-            'level_name' => Logger::getLevelName($level),
-            'channel' => 'test',
-            'datetime' => \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true))),
-            'extra' => [],
-        ];
+    private function getRecord(
+        Level $level = Level::WARNING,
+        string $message = 'test',
+        $context = [],
+        \DateTimeImmutable $dt = new \DateTimeImmutable()
+    ): LogRecord {
+        return new LogRecord(
+            $dt,
+            'test',
+            Level::Debug,
+            $message,
+            $context
+        );
     }
 
     /**
@@ -522,11 +512,11 @@ class CloudWatchTest extends TestCase
     private function getMultipleRecords()
     {
         return [
-            $this->getRecord(Logger::DEBUG, 'debug message 1'),
-            $this->getRecord(Logger::DEBUG, 'debug message 2'),
-            $this->getRecord(Logger::INFO, 'information'),
-            $this->getRecord(Logger::WARNING, 'warning'),
-            $this->getRecord(Logger::ERROR, 'error'),
+            $this->getRecord(Level::Debug, 'debug message 1'),
+            $this->getRecord(Level::Debug, 'debug message 2'),
+            $this->getRecord(Level::Info, 'information'),
+            $this->getRecord(Level::Warning, 'warning'),
+            $this->getRecord(Level::Error, 'error'),
         ];
     }
 }
