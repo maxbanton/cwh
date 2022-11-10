@@ -450,4 +450,14 @@ class CloudWatch extends AbstractProcessingHandler
     {
         $this->flushBuffer();
     }
+    
+    /**
+     * Flush buffer on logger reset
+     * @inheritDoc
+     */
+    public function reset(): void
+    {
+        $this->flushBuffer();
+        parent::reset();
+    }
 }
