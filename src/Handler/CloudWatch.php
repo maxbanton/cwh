@@ -133,15 +133,15 @@ class CloudWatch extends AbstractProcessingHandler
      */
     public function __construct(
         CloudWatchLogsClient $client,
-                             $group,
-                             $stream,
-                             $retention = 14,
-                             $batchSize = 10000,
+        $group,
+        $stream,
+        $retention = 14,
+        $batchSize = 10000,
         array $tags = [],
-                             $level = Logger::DEBUG,
-                             $bubble = true,
-                             $createGroup = true,
-                             $createStream = true,
+        $level = Logger::DEBUG,
+        $bubble = true,
+        $createGroup = true,
+        $createStream = true,
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
