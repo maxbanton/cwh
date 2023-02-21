@@ -55,11 +55,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $initialized = false;
 
     /**
-     * @var string
-     */
-    private $sequenceToken;
-
-    /**
      * @var int
      */
     private $batchSize;
@@ -201,11 +196,10 @@ class CloudWatch extends AbstractProcessingHandler
                 $this->initialize();
             }
 
-            // send items, retry once with a fresh sequence token
+            // send items, retry once if failed
             try {
                 $this->send($this->buffer);
             } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-                $this->refreshSequenceToken();
                 $this->send($this->buffer);
             }
 
@@ -309,8 +303,7 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @param array $entries
      *
-     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
-     *                                                               invalid sequence token
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example
      */
     private function send(array $entries): void
     {
@@ -331,15 +324,9 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
-        if (!empty($this->sequenceToken)) {
-            $data['sequenceToken'] = $this->sequenceToken;
-        }
-
         $this->checkThrottle();
 
         $response = $this->client->putLogEvents($data);
-
-        $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
     private function initializeGroup(): void
@@ -389,50 +376,6 @@ class CloudWatch extends AbstractProcessingHandler
         if ($this->createGroup) {
             $this->initializeGroup();
         }
-
-        $this->refreshSequenceToken();
-    }
-
-    private function refreshSequenceToken(): void
-    {
-        // fetch existing streams
-        $existingStreams =
-            $this
-                ->client
-                ->describeLogStreams(
-                    [
-                        'logGroupName' => $this->group,
-                        'logStreamNamePrefix' => $this->stream,
-                    ]
-                )->get('logStreams');
-
-        // extract existing streams names
-        $existingStreamsNames = array_map(
-            function ($stream) {
-
-                // set sequence token
-                if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
-                    $this->sequenceToken = $stream['uploadSequenceToken'];
-                }
-
-                return $stream['logStreamName'];
-            },
-            $existingStreams
-        );
-
-        // create stream if not created
-        if (!in_array($this->stream, $existingStreamsNames, true)) {
-            $this
-                ->client
-                ->createLogStream(
-                    [
-                        'logGroupName' => $this->group,
-                        'logStreamName' => $this->stream
-                    ]
-                );
-        }
-
-        $this->initialized = true;
     }
 
     /**
