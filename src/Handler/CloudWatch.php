@@ -75,6 +75,11 @@ class CloudWatch extends AbstractProcessingHandler
     private $createGroup;
 
     /**
+     * @var bool
+     */
+    private $createStream;
+
+    /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
      *
      * @var int
@@ -122,19 +127,21 @@ class CloudWatch extends AbstractProcessingHandler
      * @param int $level
      * @param bool $bubble
      * @param bool $createGroup
+     * @param bool $createStream
      *
      * @throws \Exception
      */
     public function __construct(
         CloudWatchLogsClient $client,
-        $group,
-        $stream,
-        $retention = 14,
-        $batchSize = 10000,
+                             $group,
+                             $stream,
+                             $retention = 14,
+                             $batchSize = 10000,
         array $tags = [],
-        $level = Logger::DEBUG,
-        $bubble = true,
-        $createGroup = true
+                             $level = Logger::DEBUG,
+                             $bubble = true,
+                             $createGroup = true,
+                             $createStream = true,
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -147,6 +154,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->batchSize = $batchSize;
         $this->tags = $tags;
         $this->createGroup = $createGroup;
+        $this->createStream = $createStream;
 
         parent::__construct($level, $bubble);
 
@@ -375,6 +383,44 @@ class CloudWatch extends AbstractProcessingHandler
     {
         if ($this->createGroup) {
             $this->initializeGroup();
+        }
+        if($this->createStream) {
+            $this->initializeStream();
+        }
+        $this->initialized = true;
+    }
+
+    private function initializeStream(): void
+    {
+        // fetch existing streams
+        $existingStreams =
+            $this
+                ->client
+                ->describeLogStreams(
+                    [
+                        'logGroupName' => $this->group,
+                        'logStreamNamePrefix' => $this->stream,
+                    ]
+                )->get('logStreams');
+
+        // extract existing streams names
+        $existingStreamsNames = array_map(
+            function ($stream) {
+                return $stream['logStreamName'];
+            },
+            $existingStreams
+        );
+
+        // create stream if not created
+        if (!in_array($this->stream, $existingStreamsNames, true)) {
+            $this
+                ->client
+                ->createLogStream(
+                    [
+                        'logGroupName' => $this->group,
+                        'logStreamName' => $this->stream
+                    ]
+                );
         }
     }
 

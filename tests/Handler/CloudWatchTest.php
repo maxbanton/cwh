@@ -93,6 +93,31 @@ class CloudWatchTest extends TestCase
         $reflectionMethod->invoke($handler);
     }
 
+    public function testInitializeWithCreateStreamDisabled()
+    {
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('describeLogGroups');
+
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('createLogGroup');
+
+        $this
+            ->clientMock
+            ->expects($this->never())
+            ->method('describeLogStreams');
+
+        $handler = new CloudWatch($this->clientMock, $this->groupName, $this->streamName, 14, 10000, [], Logger::DEBUG, true, false, false);
+
+        $reflection = new \ReflectionClass($handler);
+        $reflectionMethod = $reflection->getMethod('initialize');
+        $reflectionMethod->setAccessible(true);
+        $reflectionMethod->invoke($handler);
+    }
+
     public function testInitializeWithExistingLogGroup()
     {
         $logGroupsResult = new Result(['logGroups' => [['logGroupName' => $this->groupName]]]);
@@ -450,34 +475,34 @@ class CloudWatchTest extends TestCase
 
         $this
             ->clientMock
-                ->expects($this->exactly(3))
-                ->method('PutLogEvents')
-                ->willReturnCallback(function (array $data) {
-                    /** @var int|null */
-                    $earliestTime = null;
+            ->expects($this->exactly(3))
+            ->method('PutLogEvents')
+            ->willReturnCallback(function (array $data) {
+                /** @var int|null */
+                $earliestTime = null;
 
-                    /** @var int|null */
-                    $latestTime = null;
+                /** @var int|null */
+                $latestTime = null;
 
-                    foreach ($data['logEvents'] as $logEvent) {
-                        $logTimestamp = $logEvent['timestamp'];
+                foreach ($data['logEvents'] as $logEvent) {
+                    $logTimestamp = $logEvent['timestamp'];
 
-                        if (!$earliestTime || $logTimestamp < $earliestTime) {
-                            $earliestTime = $logTimestamp;
-                        }
-
-                        if (!$latestTime || $logTimestamp > $latestTime) {
-                            $latestTime = $logTimestamp;
-                        }
+                    if (!$earliestTime || $logTimestamp < $earliestTime) {
+                        $earliestTime = $logTimestamp;
                     }
 
-                    $this->assertNotNull($earliestTime);
-                    $this->assertNotNull($latestTime);
-                    $this->assertGreaterThanOrEqual($earliestTime, $latestTime);
-                    $this->assertLessThanOrEqual(24 * 60 * 60 * 1000, $latestTime - $earliestTime);
+                    if (!$latestTime || $logTimestamp > $latestTime) {
+                        $latestTime = $logTimestamp;
+                    }
+                }
 
-                    return $this->awsResultMock;
-                });
+                $this->assertNotNull($earliestTime);
+                $this->assertNotNull($latestTime);
+                $this->assertGreaterThanOrEqual($earliestTime, $latestTime);
+                $this->assertLessThanOrEqual(24 * 60 * 60 * 1000, $latestTime - $earliestTime);
+
+                return $this->awsResultMock;
+            });
 
         $handler = $this->getCUT();
 
