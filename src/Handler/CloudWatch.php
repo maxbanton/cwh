@@ -55,11 +55,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $initialized = false;
 
     /**
-     * @var string
-     */
-    private $sequenceToken;
-
-    /**
      * @var int
      */
     private $batchSize;
@@ -78,6 +73,11 @@ class CloudWatch extends AbstractProcessingHandler
      * @var bool
      */
     private $createGroup;
+
+    /**
+     * @var bool
+     */
+    private $createStream;
 
     /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
@@ -127,6 +127,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param int $level
      * @param bool $bubble
      * @param bool $createGroup
+     * @param bool $createStream
      *
      * @throws \Exception
      */
@@ -139,7 +140,8 @@ class CloudWatch extends AbstractProcessingHandler
         array $tags = [],
         $level = Logger::DEBUG,
         $bubble = true,
-        $createGroup = true
+        $createGroup = true,
+        $createStream = true,
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -152,6 +154,7 @@ class CloudWatch extends AbstractProcessingHandler
         $this->batchSize = $batchSize;
         $this->tags = $tags;
         $this->createGroup = $createGroup;
+        $this->createStream = $createStream;
 
         parent::__construct($level, $bubble);
 
@@ -201,11 +204,10 @@ class CloudWatch extends AbstractProcessingHandler
                 $this->initialize();
             }
 
-            // send items, retry once with a fresh sequence token
+            // send items, retry once if failed
             try {
                 $this->send($this->buffer);
             } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-                $this->refreshSequenceToken();
                 $this->send($this->buffer);
             }
 
@@ -309,8 +311,7 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @param array $entries
      *
-     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
-     *                                                               invalid sequence token
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example
      */
     private function send(array $entries): void
     {
@@ -331,15 +332,9 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
-        if (!empty($this->sequenceToken)) {
-            $data['sequenceToken'] = $this->sequenceToken;
-        }
-
         $this->checkThrottle();
 
         $response = $this->client->putLogEvents($data);
-
-        $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
     private function initializeGroup(): void
@@ -389,11 +384,13 @@ class CloudWatch extends AbstractProcessingHandler
         if ($this->createGroup) {
             $this->initializeGroup();
         }
-
-        $this->refreshSequenceToken();
+        if($this->createStream) {
+            $this->initializeStream();
+        }
+        $this->initialized = true;
     }
 
-    private function refreshSequenceToken(): void
+    private function initializeStream(): void
     {
         // fetch existing streams
         $existingStreams =
@@ -409,12 +406,6 @@ class CloudWatch extends AbstractProcessingHandler
         // extract existing streams names
         $existingStreamsNames = array_map(
             function ($stream) {
-
-                // set sequence token
-                if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
-                    $this->sequenceToken = $stream['uploadSequenceToken'];
-                }
-
                 return $stream['logStreamName'];
             },
             $existingStreams
@@ -431,8 +422,6 @@ class CloudWatch extends AbstractProcessingHandler
                     ]
                 );
         }
-
-        $this->initialized = true;
     }
 
     /**
