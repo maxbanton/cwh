@@ -125,7 +125,7 @@ class CloudWatch extends AbstractProcessingHandler
      * @param int $retention
      * @param int $batchSize
      * @param array $tags
-     * @param int $level
+     * @param Level $level
      * @param bool $bubble
      * @param bool $createGroup
      *
