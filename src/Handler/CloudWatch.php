@@ -6,7 +6,8 @@ use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Logger;
+use Monolog\Level;
+use Monolog\LogRecord;
 
 class CloudWatch extends AbstractProcessingHandler
 {
@@ -132,14 +133,14 @@ class CloudWatch extends AbstractProcessingHandler
      */
     public function __construct(
         CloudWatchLogsClient $client,
-        $group,
-        $stream,
-        $retention = 14,
-        $batchSize = 10000,
+        string $group,
+        string $stream,
+        int $retention = 14,
+        int $batchSize = 10000,
         array $tags = [],
-        $level = Logger::DEBUG,
-        $bubble = true,
-        $createGroup = true
+        Level $level = Level::Debug,
+        bool $bubble = true,
+        bool $createGroup = true
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -161,7 +162,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
         $records = $this->formatRecords($record);
 
@@ -277,13 +278,13 @@ class CloudWatch extends AbstractProcessingHandler
      * Event size in the batch can not be bigger than 256 KB
      * https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html
      *
-     * @param array $entry
+     * @param LogRecord $entry
      * @return array
      */
-    private function formatRecords(array $entry): array
+    private function formatRecords(LogRecord $entry): array
     {
-        $entries = str_split($entry['formatted'], self::EVENT_SIZE_LIMIT);
-        $timestamp = $entry['datetime']->format('U.u') * 1000;
+        $entries = str_split($entry->formatted, self::EVENT_SIZE_LIMIT);
+        $timestamp = $entry->datetime->format('U.u') * 1000;
         $records = [];
 
         foreach ($entries as $entry) {
@@ -324,7 +325,6 @@ class CloudWatch extends AbstractProcessingHandler
 
             return 0;
         });
-
         $data = [
             'logGroupName' => $this->group,
             'logStreamName' => $this->stream,
