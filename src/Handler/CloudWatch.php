@@ -113,7 +113,7 @@ class CloudWatch extends AbstractProcessingHandler
         $timestamp = $record['timestamp'];
 
         if (!$this->earliestTimestamp || $timestamp < $this->earliestTimestamp) {
-            $this->earliestTimestamp = $timestamp;
+            $this->earliestTimestamp = (int)$timestamp;
         }
 
         $this->buffer[] = $record;
