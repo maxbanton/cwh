@@ -75,10 +75,6 @@ class CloudWatch extends AbstractProcessingHandler
      */
     private $tags = [];
 
-    /**
-     * @var bool
-     */
-    private $createGroup;
 
     /**
      * Data amount limit (http://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
@@ -127,7 +123,6 @@ class CloudWatch extends AbstractProcessingHandler
      * @param array $tags
      * @param Level $level
      * @param bool $bubble
-     * @param bool $createGroup
      *
      * @throws \Exception
      */
@@ -139,8 +134,7 @@ class CloudWatch extends AbstractProcessingHandler
         int $batchSize = 10000,
         array $tags = [],
         Level $level = Level::Debug,
-        bool $bubble = true,
-        bool $createGroup = true
+        bool $bubble = true
     ) {
         if ($batchSize > 10000) {
             throw new \InvalidArgumentException('Batch size can not be greater than 10000');
@@ -152,7 +146,6 @@ class CloudWatch extends AbstractProcessingHandler
         $this->retention = $retention;
         $this->batchSize = $batchSize;
         $this->tags = $tags;
-        $this->createGroup = $createGroup;
 
         parent::__construct($level, $bubble);
 
@@ -342,54 +335,8 @@ class CloudWatch extends AbstractProcessingHandler
         $this->sequenceToken = $response->get('nextSequenceToken');
     }
 
-    private function initializeGroup(): void
-    {
-        // fetch existing groups
-        $existingGroups =
-            $this
-                ->client
-                ->describeLogGroups(['logGroupNamePrefix' => $this->group])
-                ->get('logGroups');
-
-        // extract existing groups names
-        $existingGroupsNames = array_map(
-            function ($group) {
-                return $group['logGroupName'];
-            },
-            $existingGroups
-        );
-
-        // create group and set retention policy if not created yet
-        if (!in_array($this->group, $existingGroupsNames, true)) {
-            $createLogGroupArguments = ['logGroupName' => $this->group];
-
-            if (!empty($this->tags)) {
-                $createLogGroupArguments['tags'] = $this->tags;
-            }
-
-            $this
-                ->client
-                ->createLogGroup($createLogGroupArguments);
-
-            if ($this->retention !== null) {
-                $this
-                    ->client
-                    ->putRetentionPolicy(
-                        [
-                            'logGroupName' => $this->group,
-                            'retentionInDays' => $this->retention,
-                        ]
-                    );
-            }
-        }
-    }
-
     private function initialize(): void
     {
-        if ($this->createGroup) {
-            $this->initializeGroup();
-        }
-
         $this->refreshSequenceToken();
     }
 
