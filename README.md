@@ -84,6 +84,27 @@ $log->warning('Bar');
 $log->error('Baz');
 ```
 
+## Using IAM Task Roles on ECS / EC2
+
+When running on ECS or EC2, prefer the task/instance IAM role over hard-coded credentials. Wrap the credential provider in `memoize()` so long-running workers don't hit metadata-endpoint timeouts:
+
+```php
+<?php
+
+use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Aws\Credentials\CredentialProvider;
+
+$provider = CredentialProvider::memoize(
+    CredentialProvider::ecsCredentials()        // or ::instanceProfile() on EC2
+);
+
+$client = new CloudWatchLogsClient([
+    'region'      => 'eu-west-1',
+    'version'     => 'latest',
+    'credentials' => $provider,
+]);
+```
+
 ## Frameworks integration
  - [Silex](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
  - [Symfony](http://symfony.com/doc/current/logging.html) ([Example](https://github.com/maxbanton/cwh/issues/10#issuecomment-296173601))
@@ -94,14 +115,12 @@ $log->error('Baz');
  
 # AWS IAM needed permissions
 if you prefer to use a separate programmatic IAM user (recommended) or want to define a policy, make sure following permissions are included:
-1. `CreateLogGroup` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogGroup.html)
 1. `CreateLogStream` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogStream.html)
 1. `PutLogEvents` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
-1. `PutRetentionPolicy` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html)
-1. `DescribeLogStreams` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html)
-1. `DescribeLogGroups` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html)
+1. `CreateLogGroup` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogGroup.html) — only when `$createGroup` is true (default)
+1. `PutRetentionPolicy` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html) — only when `$retention` is not null
 
-When setting the `$createGroup` argument to `false`, permissions `DescribeLogGroups` and `CreateLogGroup` can be omitted
+Existing policies that grant `DescribeLogGroups` / `DescribeLogStreams` remain compatible — extra permissions are harmless. The library no longer relies on them since v2.1.
 
 ## AWS IAM Policy full json example
 ```json
@@ -111,8 +130,7 @@ When setting the `$createGroup` argument to `false`, permissions `DescribeLogGro
         {
             "Effect": "Allow",
             "Action": [
-                "logs:CreateLogGroup",
-                "logs:DescribeLogGroups"
+                "logs:CreateLogGroup"
             ],
             "Resource": "*"
         },
@@ -120,7 +138,6 @@ When setting the `$createGroup` argument to `false`, permissions `DescribeLogGro
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
-                "logs:DescribeLogStreams",
                 "logs:PutRetentionPolicy"
             ],
             "Resource": "{LOG_GROUP_ARN}"
