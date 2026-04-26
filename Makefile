@@ -39,7 +39,7 @@ shell:
 	$(DC) bash
 
 matrix:
-	@printf '8.2\n8.3\n8.4\n' | xargs -n1 -P3 -I{} $(MAKE) PHP={} install ci
+	@printf '8.2\n8.3\n8.4\n8.5\n' | xargs -n1 -P4 -I{} $(MAKE) PHP={} install ci
 
 clean:
 	$(COMPOSE) down -v
