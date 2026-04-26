@@ -70,7 +70,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName,
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
         ]);
@@ -108,7 +107,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName,
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
         ]);
@@ -160,7 +158,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName,
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
         ]);
@@ -204,7 +201,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName,
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
         ]);
@@ -257,7 +253,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName . 'bar',
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198324'
                 ]
             ]
         ]);
@@ -416,7 +411,6 @@ class CloudWatchTest extends TestCase
             'logStreams' => [
                 [
                     'logStreamName' => $this->streamName,
-                    'uploadSequenceToken' => '49559307804604887372466686181995921714853186581450198322'
                 ]
             ]
         ]);

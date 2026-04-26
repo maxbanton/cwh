@@ -55,11 +55,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $initialized = false;
 
     /**
-     * @var string
-     */
-    private $sequenceToken;
-
-    /**
      * @var int
      */
     private $batchSize;
@@ -201,13 +196,7 @@ class CloudWatch extends AbstractProcessingHandler
                 $this->initialize();
             }
 
-            // send items, retry once with a fresh sequence token
-            try {
-                $this->send($this->buffer);
-            } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-                $this->refreshSequenceToken();
-                $this->send($this->buffer);
-            }
+            $this->send($this->buffer);
 
             // clear buffer
             $this->buffer = [];
@@ -331,15 +320,9 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
-        if (!empty($this->sequenceToken)) {
-            $data['sequenceToken'] = $this->sequenceToken;
-        }
-
         $this->checkThrottle();
 
-        $response = $this->client->putLogEvents($data);
-
-        $this->sequenceToken = $response->get('nextSequenceToken');
+        $this->client->putLogEvents($data);
     }
 
     private function initializeGroup(): void
@@ -409,12 +392,6 @@ class CloudWatch extends AbstractProcessingHandler
         // extract existing streams names
         $existingStreamsNames = array_map(
             function ($stream) {
-
-                // set sequence token
-                if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
-                    $this->sequenceToken = $stream['uploadSequenceToken'];
-                }
-
                 return $stream['logStreamName'];
             },
             $existingStreams
