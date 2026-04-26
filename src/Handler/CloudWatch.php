@@ -11,11 +11,6 @@ use Monolog\Logger;
 class CloudWatch extends AbstractProcessingHandler
 {
     /**
-     * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
-     */
-    const RPS_LIMIT = 5;
-
-    /**
      * Event size limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
      *
      * @var int
@@ -87,16 +82,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $currentDataAmount = 0;
 
     /**
-     * @var int
-     */
-    private $remainingRequests = self::RPS_LIMIT;
-
-    /**
-     * @var \DateTime
-     */
-    private $savedTime;
-
-    /**
      * @var int|null
      */
     private $earliestTimestamp = null;
@@ -149,8 +134,6 @@ class CloudWatch extends AbstractProcessingHandler
         $this->createGroup = $createGroup;
 
         parent::__construct($level, $bubble);
-
-        $this->savedTime = new \DateTime;
     }
 
     /**
@@ -207,24 +190,6 @@ class CloudWatch extends AbstractProcessingHandler
             // clear data amount
             $this->currentDataAmount = 0;
         }
-    }
-
-    private function checkThrottle(): void
-    {
-        $current = new \DateTime();
-        $diff = $current->diff($this->savedTime)->s;
-        $sameSecond = $diff === 0;
-
-        if ($sameSecond && $this->remainingRequests > 0) {
-            $this->remainingRequests--;
-        } elseif ($sameSecond && $this->remainingRequests === 0) {
-            sleep(1);
-            $this->remainingRequests = self::RPS_LIMIT;
-        } elseif (!$sameSecond) {
-            $this->remainingRequests = self::RPS_LIMIT;
-        }
-
-        $this->savedTime = new \DateTime();
     }
 
     /**
@@ -319,8 +284,6 @@ class CloudWatch extends AbstractProcessingHandler
             'logStreamName' => $this->stream,
             'logEvents' => $entries
         ];
-
-        $this->checkThrottle();
 
         $this->client->putLogEvents($data);
     }
