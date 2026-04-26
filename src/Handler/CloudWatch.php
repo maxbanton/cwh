@@ -40,7 +40,7 @@ class CloudWatch extends AbstractProcessingHandler
     private $stream;
 
     /**
-     * @var integer
+     * @var int|null
      */
     private $retention;
 
@@ -101,7 +101,7 @@ class CloudWatch extends AbstractProcessingHandler
      *  The ':' (colon) and '*' (asterisk) characters are not allowed.
      * @param string $stream
      *
-     * @param int $retention
+     * @param int|null $retention Days to retain logs. Pass null for indefinite retention.
      * @param int $batchSize
      * @param array $tags
      * @param int $level
@@ -114,7 +114,7 @@ class CloudWatch extends AbstractProcessingHandler
         CloudWatchLogsClient $client,
         $group,
         $stream,
-        $retention = 14,
+        ?int $retention = 14,
         $batchSize = 10000,
         array $tags = [],
         $level = Logger::DEBUG,
@@ -228,7 +228,7 @@ class CloudWatch extends AbstractProcessingHandler
     }
 
     /**
-     * Event size in the batch can not be bigger than 256 KB
+     * Each log event can not be bigger than 1 MB.
      * https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html
      *
      * @param array $entry
@@ -263,8 +263,8 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @param array $entries
      *
-     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
-     *                                                               invalid sequence token
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents on AWS-side errors
+     *                                                               (e.g. IAM denial, persistent throttling).
      */
     private function send(array $entries): void
     {
@@ -368,7 +368,7 @@ class CloudWatch extends AbstractProcessingHandler
     /**
      * Flush buffered records to CloudWatch immediately.
      *
-     * Useful for long-living workers (Laravel queues, Symfony messenger,
+     * Useful for long-lived workers (Laravel queues, Symfony messenger,
      * PHP-FPM with persistent state) that cannot rely on close() being called.
      */
     public function flush(): void
