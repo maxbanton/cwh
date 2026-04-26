@@ -1,44 +1,44 @@
 {
-    "name": "maxbanton/cwh",
-    "homepage": "https://github.com/maxbanton/cwh",
-    "type": "library",
-    "description": "AWS CloudWatch Handler for Monolog library",
-    "keywords": [
-        "aws",
-        "cloudwatch",
-        "monolog"
-    ],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Max Leonov",
-            "email": "hi@maxleonov.pw",
-            "homepage": "https://maxleonov.pw"
-        }
-    ],
-    "support": {
-        "issues": "https://github.com/maxbanton/cwh/issues",
-        "source": "https://github.com/maxbanton/cwh"
-    },
-    "require": {
-        "php": "^7.2 || ^8",
-        "monolog/monolog": "^2.0",
-        "aws/aws-sdk-php": "^3.18"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^8.5 || ^9.4",
-        "squizlabs/php_codesniffer": "^3.5"
-    },
-    "suggest": {
-        "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
-    },
-    "config": {
-        "preferred-install": "dist"
-    },
-    "autoload": {
-        "psr-4": {
-            "Maxbanton\\Cwh\\": "src"
-        }
-    },
-    "minimum-stability": "stable"
+  "name": "maxbanton/cwh",
+  "homepage": "https://github.com/maxbanton/cwh",
+  "type": "library",
+  "description": "AWS CloudWatch Handler for Monolog library",
+  "keywords": [
+    "aws",
+    "cloudwatch",
+    "monolog"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Maksym Leonov",
+      "email": "ruses_entails4f@icloud.com",
+      "homepage": "https://maxbanton.github.io"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/maxbanton/cwh/issues",
+    "source": "https://github.com/maxbanton/cwh"
+  },
+  "require": {
+    "php": "^7.2 || ^8",
+    "monolog/monolog": "^2.0",
+    "aws/aws-sdk-php": "^3.18"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.5 || ^9.4",
+    "squizlabs/php_codesniffer": "^3.5"
+  },
+  "suggest": {
+    "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
+  },
+  "config": {
+    "preferred-install": "dist"
+  },
+  "autoload": {
+    "psr-4": {
+      "Maxbanton\\Cwh\\": "src"
+    }
+  },
+  "minimum-stability": "stable"
 }
