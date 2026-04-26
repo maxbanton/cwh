@@ -20,7 +20,7 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @var int
      */
-    const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
+    const EVENT_SIZE_LIMIT = 1048550; // 1048576 (1 MB) - reserved 26 byte AWS overhead
 
     /**
      * The batch of log events in a single PutLogEvents request cannot span more than 24 hours.
