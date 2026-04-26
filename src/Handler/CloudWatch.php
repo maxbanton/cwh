@@ -450,4 +450,24 @@ class CloudWatch extends AbstractProcessingHandler
     {
         $this->flushBuffer();
     }
+
+    /**
+     * Flush buffered records to CloudWatch immediately.
+     *
+     * Useful for long-living workers (Laravel queues, Symfony messenger,
+     * PHP-FPM with persistent state) that cannot rely on close() being called.
+     */
+    public function flush(): void
+    {
+        $this->flushBuffer();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->flush();
+        parent::reset();
+    }
 }

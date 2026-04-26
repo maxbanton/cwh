@@ -312,6 +312,38 @@ class CloudWatchTest extends TestCase
         $handler->close();
     }
 
+    public function testFlushSendsBufferedRecords()
+    {
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('PutLogEvents')
+            ->willReturn($this->awsResultMock);
+
+        $handler = $this->getCUT(1000);
+
+        $handler->handle($this->getRecord(Logger::DEBUG));
+        $handler->flush();
+    }
+
+    public function testResetFlushesBuffer()
+    {
+        $this->prepareMocks();
+
+        $this
+            ->clientMock
+            ->expects($this->once())
+            ->method('PutLogEvents')
+            ->willReturn($this->awsResultMock);
+
+        $handler = $this->getCUT(1000);
+
+        $handler->handle($this->getRecord(Logger::DEBUG));
+        $handler->reset();
+    }
+
     public function testSendsBatches()
     {
         $this->prepareMocks();
