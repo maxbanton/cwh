@@ -1,0 +1,10 @@
+.git/
+.github/
+.idea/
+.vscode/
+build/
+vendor/
+*.md
+.env
+.env.*
+.phpunit.result.cache
