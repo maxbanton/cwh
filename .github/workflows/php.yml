@@ -1,53 +1,52 @@
-name: Pipeline
+name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
-  run:
+  test:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php-versions: ['7.3', '7.4', '8.0']
-    name: PHP ${{ matrix.php-versions }}
+        php: ['8.2', '8.3', '8.4', '8.5']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Build image
+        run: make PHP=${{ matrix.php }} build-svc
+
+      - name: Composer install
+        run: make PHP=${{ matrix.php }} install
+
+      - name: Lint
+        run: make PHP=${{ matrix.php }} lint
+
+      - name: Tests
+        run: make PHP=${{ matrix.php }} test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: make PHP=8.4 build-svc
+
+      - name: Composer install
+        run: make PHP=8.4 install
+
+      - name: Run tests with coverage
+        run: make PHP=8.4 test-coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         with:
-          php-version: ${{ matrix.php-versions }}
-          extensions: mbstring
-          coverage: pcov
-
-      - name: Validate composer.json
-        run: composer validate
-
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Cache dependencies
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install dependencies
-        run: composer install --no-progress -o
-
-      - name: Check syntax
-        run: |
-          php -l src/
-          vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
-
-      - name: Run tests
-        run: vendor/bin/phpunit --coverage-clover build/logs/clover.xml
-          
-      - name: Upload coverage results to Coveralls
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          composer global require php-coveralls/php-coveralls
-          php-coveralls --coverage_clover=build/logs/clover.xml -v
+          name: clover-coverage
+          path: build/logs/clover.xml
+          if-no-files-found: error

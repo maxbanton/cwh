@@ -1,0 +1,55 @@
+services:
+  php82:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: '8.2'
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+      - vendor-82:/app/vendor
+
+  php83:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: '8.3'
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+      - vendor-83:/app/vendor
+
+  php84:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: '8.4'
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+      - vendor-84:/app/vendor
+
+  php85:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: '8.5'
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+      - vendor-85:/app/vendor
+
+volumes:
+  composer-cache:
+  vendor-82:
+  vendor-83:
+  vendor-84:
+  vendor-85:
