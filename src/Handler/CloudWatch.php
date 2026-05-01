@@ -114,7 +114,7 @@ class CloudWatch extends AbstractProcessingHandler
         CloudWatchLogsClient $client,
         $group,
         $stream,
-        ?int $retention = 14,
+        $retention = 14,
         $batchSize = 10000,
         array $tags = [],
         $level = Logger::DEBUG,
@@ -290,33 +290,43 @@ class CloudWatch extends AbstractProcessingHandler
 
     private function initializeGroup(): void
     {
-        $createLogGroupArguments = ['logGroupName' => $this->group];
-
-        if (!empty($this->tags)) {
-            $createLogGroupArguments['tags'] = $this->tags;
-        }
-
-        $created = false;
-        try {
-            $this->client->createLogGroup($createLogGroupArguments);
-            $created = true;
-        } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-            if ($e->getAwsErrorCode() !== 'ResourceAlreadyExistsException') {
-                throw $e;
-            }
-        }
-
-        // Only set retention on freshly-created groups. Externally-managed retention
-        // (Terraform, manual, infra-as-code) must not be silently overwritten on each init.
-        if ($created && $this->retention !== null) {
+        // fetch existing groups
+        $existingGroups =
             $this
                 ->client
-                ->putRetentionPolicy(
-                    [
-                        'logGroupName' => $this->group,
-                        'retentionInDays' => $this->retention,
-                    ]
-                );
+                ->describeLogGroups(['logGroupNamePrefix' => $this->group])
+                ->get('logGroups');
+
+        // extract existing groups names
+        $existingGroupsNames = array_map(
+            function ($group) {
+                return $group['logGroupName'];
+            },
+            $existingGroups
+        );
+
+        // create group and set retention policy if not created yet
+        if (!in_array($this->group, $existingGroupsNames, true)) {
+            $createLogGroupArguments = ['logGroupName' => $this->group];
+
+            if (!empty($this->tags)) {
+                $createLogGroupArguments['tags'] = $this->tags;
+            }
+
+            $this
+                ->client
+                ->createLogGroup($createLogGroupArguments);
+
+            if ($this->retention !== null) {
+                $this
+                    ->client
+                    ->putRetentionPolicy(
+                        [
+                            'logGroupName' => $this->group,
+                            'retentionInDays' => $this->retention,
+                        ]
+                    );
+            }
         }
     }
 
@@ -331,7 +341,27 @@ class CloudWatch extends AbstractProcessingHandler
 
     private function initializeStream(): void
     {
-        try {
+        // fetch existing streams
+        $existingStreams =
+            $this
+                ->client
+                ->describeLogStreams(
+                    [
+                        'logGroupName' => $this->group,
+                        'logStreamNamePrefix' => $this->stream,
+                    ]
+                )->get('logStreams');
+
+        // extract existing streams names
+        $existingStreamsNames = array_map(
+            function ($stream) {
+                return $stream['logStreamName'];
+            },
+            $existingStreams
+        );
+
+        // create stream if not created yet
+        if (!in_array($this->stream, $existingStreamsNames, true)) {
             $this
                 ->client
                 ->createLogStream(
@@ -340,10 +370,6 @@ class CloudWatch extends AbstractProcessingHandler
                         'logStreamName' => $this->stream,
                     ]
                 );
-        } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-            if ($e->getAwsErrorCode() !== 'ResourceAlreadyExistsException') {
-                throw $e;
-            }
         }
 
         $this->initialized = true;

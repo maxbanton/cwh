@@ -20,15 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `EVENT_SIZE_LIMIT` raised from 256 KB to **1 MB (1,048,550 bytes)** to match the current AWS PutLogEvents quota. Messages between 256 KB and 1 MB are now shipped as a single CloudWatch event instead of split. (#101)
-- Log group / stream initialization now uses idempotent create-and-swallow-`ResourceAlreadyExistsException` pattern instead of pre-flight `describeLogGroups` / `describeLogStreams`. Removes 2 AWS API calls per process startup and shrinks the required IAM permissions. (#86, #120)
-- `$retention` constructor parameter is now typed as `?int`. (thanks @vinicius-venngage for #105)
 
 ### Removed
 
 - `RPS_LIMIT` self-throttle (5 RPS). The library no longer sleeps to artificially cap PutLogEvents calls — the AWS quota is 5,000 TPS per account/region (1000× higher), and the AWS SDK's retry middleware handles real throttling automatically. (#111, #114)
 - `sequenceToken` tracking. AWS deprecated this parameter in August 2023 — `PutLogEvents` ignores it server-side and never throws `InvalidSequenceTokenException` or `DataAlreadyAcceptedException` anymore. (thanks @a10waveracer for #115)
 - The retry-on-`CloudWatchLogsException` loop in `flushBuffer()` (it existed solely to refresh the sequence token, which no longer matters).
-- Required IAM permissions `logs:DescribeLogStreams` and `logs:DescribeLogGroups`. Existing policies that still grant these permissions remain compatible — extra permissions are harmless. (#114)
 
 ### Fixed
 

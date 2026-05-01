@@ -115,12 +115,14 @@ $client = new CloudWatchLogsClient([
  
 # AWS IAM needed permissions
 if you prefer to use a separate programmatic IAM user (recommended) or want to define a policy, make sure following permissions are included:
+1. `CreateLogGroup` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogGroup.html)
 1. `CreateLogStream` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogStream.html)
 1. `PutLogEvents` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html)
-1. `CreateLogGroup` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CreateLogGroup.html) — only when `$createGroup` is true (default)
-1. `PutRetentionPolicy` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html) — only when `$retention` is not null
+1. `PutRetentionPolicy` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html)
+1. `DescribeLogStreams` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html)
+1. `DescribeLogGroups` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html)
 
-Existing policies that grant `DescribeLogGroups` / `DescribeLogStreams` remain compatible — extra permissions are harmless. The library no longer relies on them since v2.1.
+When setting the `$createGroup` argument to `false`, permissions `DescribeLogGroups` and `CreateLogGroup` can be omitted
 
 ## AWS IAM Policy full json example
 ```json
@@ -130,7 +132,8 @@ Existing policies that grant `DescribeLogGroups` / `DescribeLogStreams` remain c
         {
             "Effect": "Allow",
             "Action": [
-                "logs:CreateLogGroup"
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups"
             ],
             "Resource": "*"
         },
@@ -138,6 +141,7 @@ Existing policies that grant `DescribeLogGroups` / `DescribeLogStreams` remain c
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
                 "logs:PutRetentionPolicy"
             ],
             "Resource": "{LOG_GROUP_ARN}"
