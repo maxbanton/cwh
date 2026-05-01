@@ -84,6 +84,27 @@ $log->warning('Bar');
 $log->error('Baz');
 ```
 
+## Using IAM Task Roles on ECS / EC2
+
+When running on ECS or EC2, prefer the task/instance IAM role over hard-coded credentials. Wrap the credential provider in `memoize()` so long-running workers don't hit metadata-endpoint timeouts:
+
+```php
+<?php
+
+use Aws\CloudWatchLogs\CloudWatchLogsClient;
+use Aws\Credentials\CredentialProvider;
+
+$provider = CredentialProvider::memoize(
+    CredentialProvider::ecsCredentials()        // or ::instanceProfile() on EC2
+);
+
+$client = new CloudWatchLogsClient([
+    'region'      => 'eu-west-1',
+    'version'     => 'latest',
+    'credentials' => $provider,
+]);
+```
+
 ## Frameworks integration
  - [Silex](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
  - [Symfony](http://symfony.com/doc/current/logging.html) ([Example](https://github.com/maxbanton/cwh/issues/10#issuecomment-296173601))

@@ -12,7 +12,8 @@ build-svc:
 	$(COMPOSE) build $(SERVICE)
 
 install:
-	$(DC) composer install
+	@rm -f composer.lock
+	$(DC) composer update --no-progress --prefer-dist
 
 update:
 	$(DC) composer update

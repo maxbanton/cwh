@@ -11,16 +11,11 @@ use Monolog\Logger;
 class CloudWatch extends AbstractProcessingHandler
 {
     /**
-     * Requests per second limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
-     */
-    const RPS_LIMIT = 5;
-
-    /**
      * Event size limit (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
      *
      * @var int
      */
-    const EVENT_SIZE_LIMIT = 262118; // 262144 - reserved 26
+    const EVENT_SIZE_LIMIT = 1048550; // 1048576 (1 MB) - reserved 26 byte AWS overhead
 
     /**
      * The batch of log events in a single PutLogEvents request cannot span more than 24 hours.
@@ -45,7 +40,7 @@ class CloudWatch extends AbstractProcessingHandler
     private $stream;
 
     /**
-     * @var integer
+     * @var int|null
      */
     private $retention;
 
@@ -53,11 +48,6 @@ class CloudWatch extends AbstractProcessingHandler
      * @var bool
      */
     private $initialized = false;
-
-    /**
-     * @var string
-     */
-    private $sequenceToken;
 
     /**
      * @var int
@@ -92,16 +82,6 @@ class CloudWatch extends AbstractProcessingHandler
     private $currentDataAmount = 0;
 
     /**
-     * @var int
-     */
-    private $remainingRequests = self::RPS_LIMIT;
-
-    /**
-     * @var \DateTime
-     */
-    private $savedTime;
-
-    /**
      * @var int|null
      */
     private $earliestTimestamp = null;
@@ -121,7 +101,7 @@ class CloudWatch extends AbstractProcessingHandler
      *  The ':' (colon) and '*' (asterisk) characters are not allowed.
      * @param string $stream
      *
-     * @param int $retention
+     * @param int|null $retention Days to retain logs. Pass null for indefinite retention.
      * @param int $batchSize
      * @param array $tags
      * @param int $level
@@ -154,8 +134,6 @@ class CloudWatch extends AbstractProcessingHandler
         $this->createGroup = $createGroup;
 
         parent::__construct($level, $bubble);
-
-        $this->savedTime = new \DateTime;
     }
 
     /**
@@ -201,13 +179,7 @@ class CloudWatch extends AbstractProcessingHandler
                 $this->initialize();
             }
 
-            // send items, retry once with a fresh sequence token
-            try {
-                $this->send($this->buffer);
-            } catch (\Aws\CloudWatchLogs\Exception\CloudWatchLogsException $e) {
-                $this->refreshSequenceToken();
-                $this->send($this->buffer);
-            }
+            $this->send($this->buffer);
 
             // clear buffer
             $this->buffer = [];
@@ -218,24 +190,6 @@ class CloudWatch extends AbstractProcessingHandler
             // clear data amount
             $this->currentDataAmount = 0;
         }
-    }
-
-    private function checkThrottle(): void
-    {
-        $current = new \DateTime();
-        $diff = $current->diff($this->savedTime)->s;
-        $sameSecond = $diff === 0;
-
-        if ($sameSecond && $this->remainingRequests > 0) {
-            $this->remainingRequests--;
-        } elseif ($sameSecond && $this->remainingRequests === 0) {
-            sleep(1);
-            $this->remainingRequests = self::RPS_LIMIT;
-        } elseif (!$sameSecond) {
-            $this->remainingRequests = self::RPS_LIMIT;
-        }
-
-        $this->savedTime = new \DateTime();
     }
 
     /**
@@ -274,7 +228,7 @@ class CloudWatch extends AbstractProcessingHandler
     }
 
     /**
-     * Event size in the batch can not be bigger than 256 KB
+     * Each log event can not be bigger than 1 MB.
      * https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html
      *
      * @param array $entry
@@ -309,8 +263,8 @@ class CloudWatch extends AbstractProcessingHandler
      *
      * @param array $entries
      *
-     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents for example in case of an
-     *                                                               invalid sequence token
+     * @throws \Aws\CloudWatchLogs\Exception\CloudWatchLogsException Thrown by putLogEvents on AWS-side errors
+     *                                                               (e.g. IAM denial, persistent throttling).
      */
     private function send(array $entries): void
     {
@@ -331,15 +285,7 @@ class CloudWatch extends AbstractProcessingHandler
             'logEvents' => $entries
         ];
 
-        if (!empty($this->sequenceToken)) {
-            $data['sequenceToken'] = $this->sequenceToken;
-        }
-
-        $this->checkThrottle();
-
-        $response = $this->client->putLogEvents($data);
-
-        $this->sequenceToken = $response->get('nextSequenceToken');
+        $this->client->putLogEvents($data);
     }
 
     private function initializeGroup(): void
@@ -390,10 +336,10 @@ class CloudWatch extends AbstractProcessingHandler
             $this->initializeGroup();
         }
 
-        $this->refreshSequenceToken();
+        $this->initializeStream();
     }
 
-    private function refreshSequenceToken(): void
+    private function initializeStream(): void
     {
         // fetch existing streams
         $existingStreams =
@@ -409,25 +355,19 @@ class CloudWatch extends AbstractProcessingHandler
         // extract existing streams names
         $existingStreamsNames = array_map(
             function ($stream) {
-
-                // set sequence token
-                if ($stream['logStreamName'] === $this->stream && isset($stream['uploadSequenceToken'])) {
-                    $this->sequenceToken = $stream['uploadSequenceToken'];
-                }
-
                 return $stream['logStreamName'];
             },
             $existingStreams
         );
 
-        // create stream if not created
+        // create stream if not created yet
         if (!in_array($this->stream, $existingStreamsNames, true)) {
             $this
                 ->client
                 ->createLogStream(
                     [
                         'logGroupName' => $this->group,
-                        'logStreamName' => $this->stream
+                        'logStreamName' => $this->stream,
                     ]
                 );
         }
@@ -449,5 +389,25 @@ class CloudWatch extends AbstractProcessingHandler
     public function close(): void
     {
         $this->flushBuffer();
+    }
+
+    /**
+     * Flush buffered records to CloudWatch immediately.
+     *
+     * Useful for long-lived workers (Laravel queues, Symfony messenger,
+     * PHP-FPM with persistent state) that cannot rely on close() being called.
+     */
+    public function flush(): void
+    {
+        $this->flushBuffer();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->flush();
+        parent::reset();
     }
 }
