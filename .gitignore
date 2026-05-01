@@ -3,3 +3,4 @@
 /.phpunit.result.cache
 /composer.lock
 /build/
+/tests/smoke/
