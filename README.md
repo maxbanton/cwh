@@ -19,7 +19,8 @@ Please press **&#9733; Star** button if you find this library useful.
 This library uses AWS API through AWS PHP SDK, which has limits on concurrent requests. It means that on high concurrent or high load applications it may not work on it's best way. Please consider using another solution such as logging to the stdout and redirecting logs with fluentd.
 
 ## Requirements
-* PHP ^7.3
+* PHP ^8.1
+* Monolog ^3.0
 * AWS account with proper permissions (see list of permissions below)
 
 ## Features
@@ -32,7 +33,7 @@ This library uses AWS API through AWS PHP SDK, which has limits on concurrent re
 Install the latest version with [Composer](https://getcomposer.org/) by running
 
 ```bash
-$ composer require maxbanton/cwh:^2.0
+$ composer require maxbanton/cwh:^3.0
 ```
 
 ## Basic Usage
@@ -41,8 +42,9 @@ $ composer require maxbanton/cwh:^2.0
 
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Maxbanton\Cwh\Handler\CloudWatch;
-use Monolog\Logger;
 use Monolog\Formatter\JsonFormatter;
+use Monolog\Level;
+use Monolog\Logger;
 
 $sdkParams = [
     'region' => 'eu-west-1',
@@ -67,7 +69,12 @@ $streamName = 'ec2-instance-1';
 $retentionDays = 30;
 
 // Instantiate handler (tags are optional)
-$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value']);
+$handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, ['my-awesome-tag' => 'tag-value'], Level::Debug);
+
+// Set $createStream to false (10th argument) when the log stream is provisioned out of band
+// (e.g. via Terraform `aws_cloudwatch_log_stream`). This skips DescribeLogStreams + CreateLogStream
+// and lets you drop the matching IAM permissions.
+// $handler = new CloudWatch($client, $groupName, $streamName, $retentionDays, 10000, [], Level::Debug, true, true, false);
 
 // Optionally set the JsonFormatter to be able to access your log messages in a structured way
 $handler->setFormatter(new JsonFormatter());
@@ -106,12 +113,24 @@ $client = new CloudWatchLogsClient([
 ```
 
 ## Frameworks integration
- - [Silex](http://silex.sensiolabs.org/doc/master/providers/monolog.html#customization)
- - [Symfony](http://symfony.com/doc/current/logging.html) ([Example](https://github.com/maxbanton/cwh/issues/10#issuecomment-296173601))
- - [Lumen](https://lumen.laravel.com/docs/5.2/errors)
- - [Laravel](https://laravel.com/docs/5.4/errors) ([Example](https://stackoverflow.com/a/51790656/1856778))
-  
+ - [Symfony](https://symfony.com/doc/current/logging.html) ([Example](https://github.com/maxbanton/cwh/issues/10#issuecomment-296173601))
+ - [Laravel](https://laravel.com/docs/12.x/logging) ([Example](https://stackoverflow.com/a/51790656/1856778))
+
  [And many others](https://github.com/Seldaek/monolog#framework-integrations)
+
+## Migrating from 2.x to 3.x
+
+3.x is a breaking release that drops Monolog 2 and PHP 7.x support. The constructor parameter order, names, and defaults are preserved — existing Symfony YAML and Laravel `with`/`handler_with` configs continue to work after the platform upgrades below.
+
+**Required changes:**
+- Bump PHP to 8.1 or newer.
+- Bump Monolog to 3.x.
+- The `Monolog\Logger::DEBUG` (and other) constants were removed in Monolog 3. Use `Monolog\Level::Debug` instead — `int|string|Level` are all accepted by the `$level` constructor argument.
+- Symfony service definitions referencing `!php/const Monolog\Logger::WARNING` must change to `!php/const Monolog\Level::Warning`.
+- Laravel channels using `'level' => 'warning'` (string form) keep working unchanged.
+
+**New (optional):**
+- A 10th constructor argument `$createStream` (default `true`). Set to `false` to skip `DescribeLogStreams`/`CreateLogStream` for pre-provisioned streams; lets you drop those IAM permissions.
  
 # AWS IAM needed permissions
 if you prefer to use a separate programmatic IAM user (recommended) or want to define a policy, make sure following permissions are included:
@@ -122,7 +141,9 @@ if you prefer to use a separate programmatic IAM user (recommended) or want to d
 1. `DescribeLogStreams` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html)
 1. `DescribeLogGroups` [aws docs](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html)
 
-When setting the `$createGroup` argument to `false`, permissions `DescribeLogGroups` and `CreateLogGroup` can be omitted
+When setting the `$createGroup` argument to `false`, permissions `DescribeLogGroups` and `CreateLogGroup` can be omitted.
+
+When setting the `$createStream` argument to `false`, permissions `DescribeLogStreams` and `CreateLogStream` can be omitted. Use this when the log stream is provisioned out of band (e.g. via Terraform). If the stream does not exist at runtime, `PutLogEvents` will fail with `ResourceNotFoundException`.
 
 ## AWS IAM Policy full json example
 ```json
