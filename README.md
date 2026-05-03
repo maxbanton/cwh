@@ -16,7 +16,7 @@ Before using this library, it's recommended to get acquainted with the [pricing]
 Please press **&#9733; Star** button if you find this library useful.
 
 ## Disclaimer
-This library uses AWS API through AWS PHP SDK, which has limits on concurrent requests. It means that on high concurrent or high load applications it may not work on it's best way. Please consider using another solution such as logging to the stdout and redirecting logs with fluentd.
+Logs are shipped to AWS CloudWatch Logs synchronously inside your PHP process. For very high-throughput workloads (thousands of records/sec sustained per process), consider an out-of-process pipeline — for example, logging to stdout and forwarding with the [CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html) — that decouples log shipping from request latency and isolates AWS API failures from your app. For typical web and worker workloads, this handler is fine.
 
 ## Requirements
 * PHP ^8.1
@@ -24,10 +24,12 @@ This library uses AWS API through AWS PHP SDK, which has limits on concurrent re
 * AWS account with proper permissions (see list of permissions below)
 
 ## Features
-* Up to 10000 batch logs sending in order to avoid _Rate exceeded_ errors 
-* Log Groups creating with tags
-* AWS CloudWatch Logs staff lazy loading
-* Suitable for web applications and for long-living CLI daemons and workers
+* Batches up to 10,000 events per `PutLogEvents` call (the AWS per-batch maximum), with automatic flush on size (1 MB), event-timespan (24 h), or buffer-full thresholds
+* Splits oversized records (> 1 MB) into multiple events automatically
+* Optional log-group creation with tags and retention policy
+* Lazy log-group / log-stream initialization on first write
+* Public `flush()` and `reset()` for long-lived workers (Symfony Messenger, Laravel queues / Octane, custom daemons)
+* Suitable for web applications and for long-running CLI daemons and workers
 
 ## Installation
 Install the latest version with [Composer](https://getcomposer.org/) by running
@@ -128,6 +130,7 @@ $client = new CloudWatchLogsClient([
 - The `Monolog\Logger::DEBUG` (and other) constants were removed in Monolog 3. Use `Monolog\Level::Debug` instead — `int|string|Level` are all accepted by the `$level` constructor argument.
 - Symfony service definitions referencing `!php/const Monolog\Logger::WARNING` must change to `!php/const Monolog\Level::Warning`.
 - Laravel channels using `'level' => 'warning'` (string form) keep working unchanged.
+- Subclasses overriding `protected function write(array $record): void` must update the signature to `protected function write(\Monolog\LogRecord $record): void` and access fields via `$record->property` instead of `$record['key']`.
 
 **New (optional):**
 - A 10th constructor argument `$createStream` (default `true`). Set to `false` to skip `DescribeLogStreams`/`CreateLogStream` for pre-provisioned streams; lets you drop those IAM permissions.
