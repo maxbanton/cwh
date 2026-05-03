@@ -16,4 +16,18 @@
 
 Changes that are cosmetic in nature and do not add anything substantial to the stability, functionality, or testability will generally not be accepted.
 
+#### **Local development**
+
+Use the Makefile targets — they run inside Docker against the supported PHP matrix and exactly match what CI runs. Direct `phpunit`/`phpcs`/`phpstan` invocations on your host may pick up a different PHP version or dependency set:
+
+```bash
+make build-svc PHP=8.4    # build the dev container
+make install   PHP=8.4    # composer install inside it
+make lint                 # PSR-12 lint via phpcs
+make lint-fix             # auto-fix PSR-12 violations via phpcbf
+make analyse              # phpstan level 8
+make test                 # PHPUnit
+make matrix               # run install + lint + test across PHP 8.1–8.5 in parallel
+```
+
 Thanks!

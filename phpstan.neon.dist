@@ -1,0 +1,11 @@
+parameters:
+    level: 8
+    paths:
+        - src
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # User-facing $level accepts int|string|Level for ergonomics.
+        # Monolog\Logger::toMonologLevel() narrows internally; broader type is intentional.
+        -
+            message: '#Parameter \#1 \$level of static method Monolog\\Logger::toMonologLevel\(\) expects.*int\|Monolog\\Level\|string given\.#'
+            path: src/Handler/CloudWatch.php

@@ -25,10 +25,10 @@ test-coverage:
 	$(DC) vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
 
 lint:
-	$(DC) vendor/bin/phpcs --standard=psr2 --ignore=Tests src/
+	$(DC) vendor/bin/phpcs --standard=PSR12 --ignore=Tests src/
 
 lint-fix:
-	$(DC) vendor/bin/phpcbf --standard=psr2 --ignore=Tests src/
+	$(DC) vendor/bin/phpcbf --standard=PSR12 --ignore=Tests src/
 
 analyse:
 	$(DC) vendor/bin/phpstan analyse --level=8 src/
@@ -40,7 +40,7 @@ shell:
 	$(DC) bash
 
 matrix:
-	@printf '8.2\n8.3\n8.4\n8.5\n' | xargs -n1 -P4 -I{} $(MAKE) PHP={} install ci
+	@printf '8.1\n8.2\n8.3\n8.4\n8.5\n' | xargs -n1 -P5 -I{} $(MAKE) PHP={} install ci
 
 clean:
 	$(COMPOSE) down -v

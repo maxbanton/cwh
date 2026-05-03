@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ["8.2", "8.3", "8.4", "8.5"]
+        php: ["8.1", "8.2", "8.3", "8.4", "8.5"]
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +28,9 @@ jobs:
 
       - name: Lint
         run: make PHP=${{ matrix.php }} lint
+
+      - name: Static analysis
+        run: make PHP=${{ matrix.php }} analyse
 
       - name: Tests
         run: make PHP=${{ matrix.php }} test
