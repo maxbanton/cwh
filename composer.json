@@ -22,7 +22,7 @@
   },
   "require": {
     "php": "^8.1",
-    "aws/aws-sdk-php": "^3.18",
+    "aws/aws-sdk-php": "^3.0",
     "monolog/monolog": "^3.0"
   },
   "require-dev": {
