@@ -1,4 +1,16 @@
 services:
+  php81:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: '8.1'
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+      - vendor-81:/app/vendor
+
   php82:
     build:
       context: .
@@ -49,6 +61,7 @@ services:
 
 volumes:
   composer-cache:
+  vendor-81:
   vendor-82:
   vendor-83:
   vendor-84:

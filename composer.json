@@ -21,19 +21,22 @@
     "source": "https://github.com/maxbanton/cwh"
   },
   "require": {
-    "php": "^7.2 || ^8",
-    "monolog/monolog": "^2.0",
-    "aws/aws-sdk-php": "^3.18"
+    "php": "^8.1",
+    "aws/aws-sdk-php": "^3.18",
+    "monolog/monolog": "^3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^8.5 || ^9.4",
-    "squizlabs/php_codesniffer": "^3.5"
+    "phpstan/phpstan": "^1.11",
+    "phpunit/phpunit": "^10.5 || ^11.0",
+    "squizlabs/php_codesniffer": "^3.10"
   },
   "suggest": {
     "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
   },
   "config": {
-    "preferred-install": "dist"
+    "allow-plugins": {},
+    "preferred-install": "dist",
+    "sort-packages": true
   },
   "autoload": {
     "psr-4": {
